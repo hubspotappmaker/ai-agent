@@ -2,6 +2,30 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
+# Environment variables
+
+Create a `.env` file with the following variables:
+
+```
+HUBSPOT_CLIENT_ID=
+HUBSPOT_CLIENT_SECRET=
+HUBSPOT_REDIRECT_URI=https://127.0.0.1:8386/oauth
+HUBSPOT_TOKEN_URL=https://api.hubapi.com/oauth/v1/token
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=
+DB_NAME=hubspot
+DB_SYNC=true
+DB_LOGGING=false
+DB_CHARSET=utf8mb4
+DB_COLLATION=utf8mb4_unicode_ci
+
+HTTPS_KEY_PATH=
+HTTPS_CERT_PATH=
+PORT=8386
+```
 [circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
 [circleci-url]: https://circleci.com/gh/nestjs/nest
 

@@ -4,6 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import * as querystring from 'querystring';
 import { UserRepository } from 'lib/repository/user.repository';
+import { HubspotRepository } from 'lib/repository/hubspot.repository';
 
 @Injectable()
 export class TokenService {
@@ -15,6 +16,7 @@ export class TokenService {
         private readonly config: ConfigService,
         private readonly http: HttpService,
         private readonly userRepository: UserRepository,
+        private readonly hubspotRepository: HubspotRepository,
     ) {
         this.clientId = "7618532b-e62d-431a-a2d1-036faaa3f506";
         this.clientSecret = "d5711e85-fe83-4bfc-92c1-acc4fbb93a8a";
@@ -22,7 +24,7 @@ export class TokenService {
     }
 
     async getTokenPortalId(portalId: string) {
-        const hubspot = await this.userRepository.findOne({
+        const hubspot = await this.hubspotRepository.findOne({
             where: { portalId: portalId }
         });
         if (!hubspot) {
@@ -56,12 +58,12 @@ export class TokenService {
                 throw new BadRequestException('Failed to refresh access token');
             }
 
-            // Cập nhật user trong DB
+            // Update hubspot account in DB
             hubspot.accessToken = response.data.access_token;
             if (response.data.refresh_token) {
                 hubspot.refreshToken = response.data.refresh_token;
             }
-            await this.userRepository.save(hubspot);
+            await this.hubspotRepository.save(hubspot);
             console.log(hubspot.accessToken);
             return hubspot.accessToken;
         } else {

@@ -15,16 +15,19 @@ export class AppController {
   @Get('oauth')
   async callback(
     @Query('code') code: string,
+    @Query('state') userId: string,
     @Res() res: Response,
   ) {
-
     if (!code) {
       throw new BadRequestException('Missing code parameter');
     }
+    if (!userId) {
+      throw new BadRequestException('Missing state (userId) parameter');
+    }
 
-    const tokens = await this.appService.exchangeCodeForTokens(code);
+    const hubspotAccount = await this.appService.exchangeCodeForTokens(code, userId);
 
-    return res.json(tokens);
+    return res.json({ success: true, hubspotAccount });
   }
 
   @Get('test')

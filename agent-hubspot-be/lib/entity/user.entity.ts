@@ -1,5 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { Hubspot } from './hubspot.entity';
+import { Prompt } from './prompt.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -7,23 +9,24 @@ export class User extends BaseEntity {
     id: string;
 
     @Column({ type: 'varchar', length: 100, nullable: true })
-    name: string;
+    name: string | null;
 
-    @Column({ type: 'varchar', length: 150, nullable: true })
+    @Column({ type: 'varchar', length: 100, unique: true })
+    username: string;
+
+    @Column({ type: 'varchar', length: 100, unique: true })
     email: string;
 
-    @Column({ type: 'varchar', length: 100, name: 'portal_id', nullable: true })
-    portalId: string;
-
-    @Column({ type: 'varchar', length: 100, name: 'account_type', nullable: true })
-    accountType: string;
-
-    @Column({ type: 'text', name: 'access_token', nullable: true })
-    accessToken: string;
-
-    @Column({ type: 'text', name: 'refresh_token', nullable: true })
-    refreshToken: string;
+    @Column({ type: 'varchar', length: 255 })
+    password: string;
 
     @Column({ type: 'boolean', name: 'is_activate', default: true })
     isActivate: boolean;
+
+    @OneToMany(() => Hubspot, (hubspot) => hubspot.user, { cascade: true })
+    hubspots: Hubspot[];
+
+    @OneToMany(() => Prompt, (prompt) => prompt.user, { cascade: true })
+    prompts: Prompt[];
+    
 }
