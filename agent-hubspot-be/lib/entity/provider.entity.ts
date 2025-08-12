@@ -1,7 +1,9 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Hubspot } from './hubspot.entity';
-import { ProviderTypeName, ProviderTypeKey, PROVIDER_TYPE_PRESETS } from 'lib/constant/provider.constants';
+import { ProviderType, PROVIDER_TYPE_PRESETS } from 'lib/constant/provider.constants';
+
+type ProviderPreset = (typeof PROVIDER_TYPE_PRESETS)[keyof typeof PROVIDER_TYPE_PRESETS];
 
 @Entity({ name: 'providers' })
 export class Provider extends BaseEntity {
@@ -11,14 +13,20 @@ export class Provider extends BaseEntity {
   @Column({ type: 'varchar', length: 150 })
   name: string;
 
+  @Column({ type: 'varchar', length: 550, nullable: true })
+  key: string | null;
+
   @Column({ type: 'int', name: 'max_token', default: 0 })
   maxToken: number;
 
-  @Column({ type: 'json' })
-  type: ProviderTypeName;
-
   @Column({ type: 'varchar', length: 50, name: 'type_key' })
-  typeKey: ProviderTypeKey;
+  typeKey: ProviderType;
+
+  @Column({ type: 'json', nullable: true, name: 'type' })
+  type: ProviderPreset | null;
+
+  @Column({ type: 'text', nullable: true })
+  prompt: string | null;
 
   @ManyToOne(() => Hubspot, (hubspot) => hubspot.providers, { onDelete: 'CASCADE' })
   hubspot: Hubspot;

@@ -17,5 +17,4 @@ export const PROVIDER_TYPE_PRESETS = {
   },
 } as const;
 
-export type ProviderTypeKey = keyof typeof PROVIDER_TYPE_PRESETS;
-export type ProviderTypeName = typeof PROVIDER_TYPE_PRESETS[ProviderTypeKey];
+export type ProviderType = keyof typeof PROVIDER_TYPE_PRESETS;
