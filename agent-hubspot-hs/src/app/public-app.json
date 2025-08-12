@@ -1,0 +1,35 @@
+{
+  "name": "AI Chatbot and Email Writer by Nexce.io)",
+  "uid": "nexce-ai-agent-hubspot-hs",
+  "description": "An example to demonstrate how to build a public app with developer projects.",
+  "allowedUrls": ["https://127.0.0.1:8386/"],
+  "auth": {
+    "redirectUrls": ["https://127.0.0.1:8386/oauth"],
+    "requiredScopes": [
+      "crm.objects.contacts.read", 
+      "crm.objects.contacts.write",
+         "settings.users.read",
+      "crm.objects.users.read"
+    ],
+    "optionalScopes": [],
+    "conditionallyRequiredScopes": []
+  },
+  "support": {
+    "supportEmail": "support@example.com",
+    "documentationUrl": "https://example.com/docs",
+    "supportUrl": "https://example.com/support",
+    "supportPhone": "+18005555555"
+  },
+  "extensions": {
+    "crm": {
+      "cards": [
+        {
+          "file": "./extensions/example-card.json"
+        }
+      ]
+    }
+  },
+  "webhooks": {
+    "file": "./webhooks/webhooks.json"
+  }
+}
