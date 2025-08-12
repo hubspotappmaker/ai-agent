@@ -12,7 +12,7 @@ import { RolesGuard } from './roles.guard';
     RepositoriesModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'dev-secret',
+      secret: process.env.JWT_SECRET || 'GF2292Sq3wGWN6B2LbJvTauImlWc13W5',
       signOptions: { expiresIn: '7d' },
     }),
   ],

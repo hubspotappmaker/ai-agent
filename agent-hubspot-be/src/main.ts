@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ResponseTransformInterceptor } from './common/interceptors/response.interceptor';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const httpsOptions = {
@@ -23,6 +25,8 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalInterceptors(new ResponseTransformInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Agent Hubspot API')
@@ -35,5 +39,6 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 8386);
   console.log(`Server is running on https://localhost:${process.env.PORT ?? 8386}`);
+  console.log(`docs is running on https://localhost:${process.env.PORT ?? 8386}/docs`);
 }
 bootstrap();

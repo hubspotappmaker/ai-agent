@@ -1,9 +1,11 @@
 // src/app.controller.ts
-import { Controller, Get, Query, Res, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, Res, BadRequestException, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { TokenService } from 'lib/service/token.service';
 import { Response } from 'express';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { CurrentUser } from './auth/current-user.decorator';
 
 @ApiTags('App')
 @Controller()
@@ -18,7 +20,6 @@ export class AppController {
   async callback(
     @Query('code') code: string,
     @Query('state') userId: string,
-    @Res() res: Response,
   ) {
     if (!code) {
       throw new BadRequestException('Missing code parameter');
@@ -28,12 +29,18 @@ export class AppController {
     }
 
     const hubspotAccount = await this.appService.exchangeCodeForTokens(code, userId);
-
-    return res.json({ success: true, hubspotAccount });
+    return { hubspotAccount };
   }
 
   @Get('test')
   async createIframe() {
-    return this.tokenService.getTokenPortalId("243162647")
+    return this.tokenService.getTokenPortalId("243415357")
+  }
+
+  @Get('get-hubspot-install-link')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  async getHubspotInstallLink(@CurrentUser('id') userId: string) {
+    return `${process.env.HUBSPOT_LINK}&state=${userId}`
   }
 }
