@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Hubspot } from './hubspot.entity';
 import { Prompt } from './prompt.entity';
+import { UserRole } from 'lib/constant/user.constants';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -12,9 +13,6 @@ export class User extends BaseEntity {
     name: string | null;
 
     @Column({ type: 'varchar', length: 100, unique: true })
-    username: string;
-
-    @Column({ type: 'varchar', length: 100, unique: true })
     email: string;
 
     @Column({ type: 'varchar', length: 255 })
@@ -22,6 +20,9 @@ export class User extends BaseEntity {
 
     @Column({ type: 'boolean', name: 'is_activate', default: true })
     isActivate: boolean;
+
+    @Column({ type: 'varchar', length: 20, default: UserRole.USER })
+    role: UserRole;
 
     @OneToMany(() => Hubspot, (hubspot) => hubspot.user, { cascade: true })
     hubspots: Hubspot[];

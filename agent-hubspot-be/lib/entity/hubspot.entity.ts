@@ -27,6 +27,6 @@ export class Hubspot extends BaseEntity {
   user: User;
 
   @OneToMany(() => Provider, (provider) => provider.hubspot, { cascade: true })
-  providers: Provider[];
+  providers?: Provider[];
 }
 

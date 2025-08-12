@@ -3,7 +3,9 @@ import { Controller, Get, Query, Res, BadRequestException } from '@nestjs/common
 import { AppService } from './app.service';
 import { TokenService } from 'lib/service/token.service';
 import { Response } from 'express';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('App')
 @Controller()
 export class AppController {
   constructor(

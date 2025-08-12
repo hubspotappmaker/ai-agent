@@ -7,11 +7,13 @@ import * as path from "path";
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RepositoriesModule } from 'lib/module/repository.module';
 import { TokenService } from '../lib/service/token.service';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     HttpModule,
     ConfigModule.forRoot(),
     RepositoriesModule,
+    AuthModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
