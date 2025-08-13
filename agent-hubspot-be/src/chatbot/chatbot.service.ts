@@ -55,6 +55,6 @@ export class ChatbotService {
                 },
             },
         );
-        return response.data;
+        return response.data.choices[0].message.content;
     }
 }
