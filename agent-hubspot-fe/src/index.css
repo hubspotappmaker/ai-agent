@@ -8,3 +8,81 @@ html, body, #root {
 }
 
 
+/* Brand animated gradient shine for headings */
+@keyframes gradient-shine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-shine {
+  background-image: linear-gradient(90deg, #5a6de0 0%, #667eea 35%, #93a1ff 55%, #667eea 80%, #5a6de0 100%);
+  background-size: 220% 220%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-shine 5s ease-in-out infinite;
+}
+
+.text-glow {
+  text-shadow: 0 1px 1px rgba(0,0,0,0.06), 0 0 18px rgba(102,126,234,0.45);
+}
+
+/* Optional subtle glitter sweep overlay */
+@keyframes glitter-sweep {
+  0% { transform: translateX(-150%) rotate(20deg); opacity: 0; }
+  30% { opacity: 0.6; }
+  50% { opacity: 0.9; }
+  70% { opacity: 0.6; }
+  100% { transform: translateX(150%) rotate(20deg); opacity: 0; }
+}
+
+.glitter-container {
+  position: relative;
+}
+
+.glitter-container .glitter::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.65) 45%,
+    rgba(255,255,255,0) 100%
+  );
+  filter: blur(2px);
+  pointer-events: none;
+  animation: glitter-sweep 4.5s ease-in-out infinite;
+}
+
+/* Subtle radial aura behind hero */
+.hero-aura {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-aura::before {
+  content: "";
+  position: absolute;
+  inset: -20px 0 0 0;
+  margin: auto;
+  height: 240px;
+  width: 70%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    120px 120px at 50% 10%,
+    rgba(102,126,234,0.22) 0%,
+    rgba(102,126,234,0.10) 35%,
+    rgba(102,126,234,0.06) 55%,
+    rgba(102,126,234,0.0) 75%
+  );
+  filter: blur(28px);
+  z-index: -1;
+  pointer-events: none;
+}
+

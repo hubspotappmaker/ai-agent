@@ -59,7 +59,7 @@ const Chat: React.FC = () => {
           <div key={message.id} className={`flex items-start gap-3 ${message.isUser ? 'flex-row-reverse' : 'flex-row'}`}>
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.isUser ? 'bg-blue-600 text-white' : 'bg-emerald-100 text-emerald-700'
+                message.isUser ? 'bg-[#667eea] text-white' : 'bg-emerald-100 text-emerald-700'
               }`}
             >
               {message.isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -67,7 +67,7 @@ const Chat: React.FC = () => {
 
             <div
               className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-3 rounded-2xl ${
-                message.isUser ? 'bg-blue-600 text-white rounded-tr-md' : 'bg-slate-100 text-slate-800 rounded-tl-md'
+                message.isUser ? 'bg-[#667eea] text-white rounded-tr-md' : 'bg-slate-100 text-slate-800 rounded-tl-md'
               }`}
             >
               <p className="text-sm leading-relaxed">{message.text}</p>
@@ -84,7 +84,7 @@ const Chat: React.FC = () => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent resize-none"
             rows={1}
             style={{ minHeight: '48px', maxHeight: '120px' }}
           />
@@ -93,7 +93,7 @@ const Chat: React.FC = () => {
           style={{ marginBottom: '10px' }}
           onClick={handleSend}
           disabled={!inputValue.trim()}
-          className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
+          className="px-4 py-3 bg-[#667eea] text-white rounded-xl hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
         >
           <Send className="w-4 h-4" />
         </button>

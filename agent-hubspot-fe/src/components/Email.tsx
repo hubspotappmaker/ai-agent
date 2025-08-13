@@ -124,7 +124,7 @@ Marketing Team`,
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Mail className="w-5 h-5 text-blue-600" />
+          <Mail className="w-5 h-5 text-[#667eea]" />
           <h3 className="text-lg font-semibold text-slate-800">Email Generator</h3>
         </div>
         <button
@@ -141,7 +141,7 @@ Marketing Team`,
         <select
           value={selectedPrompt}
           onChange={(e) => setSelectedPrompt(e.target.value)}
-          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
         >
           <option value="business">Business Email</option>
           <option value="thank">Thank You Email</option>
@@ -162,13 +162,13 @@ Marketing Team`,
           placeholder="Enter specific content for your email..."
           value={customContent}
           onChange={(e) => setCustomContent(e.target.value)}
-          className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent resize-none"
         />
       </div>
 
       <button
         onClick={generateEmail}
-        className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+        className="w-full py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] transition-colors duration-200 font-medium"
       >
         Generate Email
       </button>
@@ -197,7 +197,7 @@ Marketing Team`,
                 <select
                   value={sender}
                   onChange={(e) => setSender(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent text-sm"
                 >
                   {senderOptions.map((opt) => (
                     <option key={opt} value={opt}>
@@ -211,7 +211,7 @@ Marketing Team`,
                 <select
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent text-sm"
                 >
                   {recipientOptions.map((opt) => (
                     <option key={opt} value={opt}>
@@ -225,7 +225,7 @@ Marketing Team`,
               <button
                 onClick={handleSendEmail}
                 disabled={isSending || !sender || !recipient}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+                className="px-4 py-2 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
               >
                 {isSending ? 'Sending…' : 'Send'}
               </button>
@@ -248,7 +248,7 @@ Marketing Team`,
                   placeholder="e.g., Meeting Invitation Email"
                   value={promptTitle}
                   onChange={(e) => setPromptTitle(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
                 />
               </div>
 
@@ -259,7 +259,7 @@ Marketing Team`,
                   placeholder="Describe how to create this email..."
                   value={promptContent}
                   onChange={(e) => setPromptContent(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent resize-none"
                 />
               </div>
             </div>
@@ -273,7 +273,7 @@ Marketing Team`,
               </button>
               <button
                 onClick={handleCreatePrompt}
-                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                className="flex-1 py-2 px-4 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] transition-colors duration-200"
               >
                 Create
               </button>

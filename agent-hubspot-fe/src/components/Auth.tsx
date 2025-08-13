@@ -4,6 +4,8 @@ import type { FormProps } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { login, register } from '../service/auth.service';
+import { useHubspotParams } from '../context/HubspotParamsContext';
 
 const { Title, Text } = Typography;
 
@@ -161,34 +163,38 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
+  const { navigateWithParams } = useHubspotParams();
 
   const handleSubmit = async (values: FormValues): Promise<void> => {
     setIsSubmitting(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate success
-      const normalizedEmail = values.email.trim();
-      localStorage.setItem('auth.token', `demo-token-${Date.now()}`);
-      localStorage.setItem('auth.email', normalizedEmail);
-      
+      const email = values.email.trim();
+      const password = values.password;
       if (activeTab === 'login') {
-        messageApi.success('Signed in successfully!');
-        onAuthSuccess?.(normalizedEmail);
-        navigate('/', { replace: true });
+        const res = await login(email, password);
+        // our axios wrapper returns { status, data, msg }
+        const token = (res?.data?.accessToken) || (res?.data?.data?.accessToken);
+        if (token) {
+          messageApi.success('Signed in successfully!');
+          onAuthSuccess?.(email);
+          navigateWithParams('/', { replace: true });
+          return;
+        }
+        throw new Error(res?.msg || 'Login failed');
       } else {
-        messageApi.success('Account created successfully!');
-        // Switch to login tab after successful registration
-        setTimeout(() => {
-          setActiveTab('login');
-          form.resetFields();
-        }, 1500);
+        const fullName = values.fullName?.trim() || '';
+        const res = await register(fullName, email, password);
+        const token = (res?.data?.accessToken) || (res?.data?.data?.accessToken);
+        if (token) {
+          messageApi.success('Account created successfully!');
+          // After register, redirect to home (already authenticated)
+          navigateWithParams('/', { replace: true });
+          return;
+        }
+        throw new Error(res?.msg || 'Register failed');
       }
-      
-    } catch (error) {
-      messageApi.error('Something went wrong. Please try again.');
+    } catch (error: any) {
+      messageApi.error(error?.message || 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

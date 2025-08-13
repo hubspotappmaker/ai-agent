@@ -35,7 +35,7 @@ const Activity: React.FC = () => {
   return (
     <div className="h-[65vh] overflow-hidden flex flex-col p-6">
       <div className="flex items-center gap-2 mb-6">
-        <HistoryIcon className="w-5 h-5 text-blue-600" />
+        <HistoryIcon className="w-5 h-5 text-[#667eea]" />
         <h3 className="text-lg font-semibold text-slate-800">Activity</h3>
       </div>
 
@@ -46,7 +46,7 @@ const Activity: React.FC = () => {
               <p className="text-sm font-medium text-slate-800 truncate">{item.subject}</p>
               <p className="text-xs text-slate-500">{item.date}</p>
             </div>
-            <button onClick={() => handleView(item)} className="text-blue-600 text-sm hover:underline">
+            <button onClick={() => handleView(item)} className="text-[#667eea] text-sm hover:underline">
               View
             </button>
           </div>

@@ -38,7 +38,7 @@ export class AppService {
 
   }
 
-  async exchangeCodeForTokens(code: string, userId: string): Promise<Hubspot> {
+  async exchangeCodeForTokens(code: string, userId: string) {
     const url = 'https://api.hubapi.com/oauth/v1/token';
     const payload = querystring.stringify({
       grant_type: 'authorization_code',
@@ -56,8 +56,11 @@ export class AppService {
       throw new BadRequestException('Failed to obtain access token');
     }
     const { access_token, refresh_token } = response.data;
-    const hubspot = await this.syncHubspotAccount(access_token, refresh_token, userId);
+    if(userId) {
+      const hubspot = await this.syncHubspotAccount(access_token, refresh_token, userId);
     return hubspot;
+    }
+    return true;
   }
 
   async syncHubspotAccount(accessToken: string, refreshToken: string, userId: string): Promise<Hubspot> {

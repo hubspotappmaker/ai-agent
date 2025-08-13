@@ -53,7 +53,7 @@ const Settings: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex items-center gap-2 mb-6">
-        <SettingsIcon className="w-5 h-5 text-blue-600" />
+        <SettingsIcon className="w-5 h-5 text-[#667eea]" />
         <h3 className="text-lg font-semibold text-slate-800">Settings</h3>
       </div>
 
@@ -76,7 +76,7 @@ const Settings: React.FC = () => {
                 setModel(options[0]);
               }
             }}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           >
             <option value="deepseek">Deepseek</option>
             <option value="gpt">GPT</option>
@@ -89,7 +89,7 @@ const Settings: React.FC = () => {
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           >
             {MODEL_OPTIONS[engine].map((m) => (
               <option key={m} value={m}>{m}</option>
@@ -104,7 +104,7 @@ const Settings: React.FC = () => {
             placeholder="Enter your API key"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           />
           <p className="text-xs text-slate-500 mt-2">Your key is stored locally in your browser.</p>
         </div>
@@ -117,7 +117,7 @@ const Settings: React.FC = () => {
             placeholder="e.g. 4000"
             value={maxTokens}
             onChange={(e) => setMaxTokens(Number(e.target.value))}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           />
           <p className="text-xs text-slate-500 mt-2">Maximum tokens per response. Stored locally.</p>
         </div>
@@ -127,7 +127,7 @@ const Settings: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={isSaving || !apiKey.trim()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="px-4 py-2 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
         >
           {isSaving ? 'Saving…' : 'Save'}
         </button>
