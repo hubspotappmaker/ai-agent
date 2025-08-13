@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Building2 } from 'lucide-react';
 import { Modal } from 'antd';
-import { getHubspotAccount } from '../service/auth.service';
+import { getHubspotAccount, deleteHubspotAccount } from '../service/auth.service';
 
 type HubspotAccount = {
   id: string;
@@ -48,7 +48,29 @@ const Account: React.FC = () => {
       cancelText: 'Cancel',
       okButtonProps: { style: { backgroundColor: '#667eea', color: 'white' } },
       onOk: async () => {
-        // TODO: call backend delete endpoint when provided, then refresh list
+        setError('');
+        const previous = accounts;
+        // Optimistic update
+        setAccounts((prev) => prev.filter((a) => a.id !== account.id));
+        try {
+          const res: any = await deleteHubspotAccount(account.id);
+          // Support axios original response and wrapper-normalized response
+          const isAxiosResponse = res && typeof res === 'object' && Object.prototype.hasOwnProperty.call(res, 'status') && (typeof res.status === 'number');
+          const isNormalized = res && typeof res === 'object' && (typeof res.status === 'boolean' || Object.prototype.hasOwnProperty.call(res, 'msg'));
+          const success = (
+            (isAxiosResponse && (res.status === 200 || res.status === 204)) ||
+            (isNormalized && (res.status === true || res.data === true)) ||
+            res === true
+          );
+          if (!success) {
+            const msg = (isNormalized ? res?.msg : res?.data?.msg) || 'Failed to delete account';
+            throw new Error(msg);
+          }
+        } catch (e: any) {
+          setAccounts(previous);
+          setError(e?.message || 'Failed to delete account');
+          throw e; // keep modal in loading until rejection handled
+        }
       },
     });
   };

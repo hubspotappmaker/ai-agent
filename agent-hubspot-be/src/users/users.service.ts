@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { HubspotRepository } from 'lib/repository/hubspot.repository';
 import { UserRepository } from 'lib/repository/user.repository';
 
@@ -25,5 +25,14 @@ export class UsersService {
       },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async deleteMyHubspot(userId: string, hubspotId: string): Promise<boolean> {
+    const hubspot = await this.hubspotRepository.findOne({ where: { id: hubspotId, user: { id: userId } } });
+    if (!hubspot) {
+      throw new NotFoundException('Hubspot not found');
+    }
+    await this.hubspotRepository.remove(hubspot);
+    return true;
   }
 }

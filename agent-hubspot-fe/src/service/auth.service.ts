@@ -73,3 +73,8 @@ export const getHubspotAccount = async () => {
     const URL_BACKEND = '/users/hubspots'
     return await dataxios.get(URL_BACKEND)
 }
+
+export const deleteHubspotAccount = async (id: string) => {
+    const URL_BACKEND = `/users/hubspots/${id}`
+    return await dataxios.delete(URL_BACKEND)
+}
