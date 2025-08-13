@@ -128,8 +128,8 @@ const Chat: React.FC = () => {
     try
     {
       const res = await chatWithGpt(body);
-
-      if (res.status !== 201)
+      console.log("check res status: ", res)
+      if (!res.status)
       {
         return;
       }

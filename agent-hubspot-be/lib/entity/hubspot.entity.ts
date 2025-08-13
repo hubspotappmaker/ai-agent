@@ -28,5 +28,9 @@ export class Hubspot extends BaseEntity {
 
   @OneToMany(() => Provider, (provider) => provider.hubspot, { cascade: true })
   providers?: Provider[];
+
+  @Column({ type: 'text', name: 'sample_chat', nullable: true })
+  sampleChat: string | null;
+
 }
 
