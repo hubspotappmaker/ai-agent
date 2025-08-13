@@ -30,7 +30,12 @@ export class ProvidersService {
     return providers;
   }
 
-  async updateProvider(userId: string, portalId: string, providerId: string, data: { key?: string | null; maxToken?: number }) {
+  async updateProvider(
+    userId: string,
+    portalId: string,
+    providerId: string,
+    data: { key?: string | null; maxToken?: number; defaultModel?: number },
+  ) {
     const hubspot = await this.hubspotRepository.findOne({ where: { portalId, user: { id: userId } } });
     if (!hubspot) throw new NotFoundException('Hubspot portal not found');
 
@@ -40,9 +45,13 @@ export class ProvidersService {
     if (typeof data.maxToken !== 'undefined' && (data.maxToken as number) < 0) {
       throw new BadRequestException('maxToken must be >= 0');
     }
+    if (typeof data.defaultModel !== 'undefined' && (data.defaultModel as number) < 0) {
+      throw new BadRequestException('defaultModel must be >= 0');
+    }
 
     if (typeof data.key !== 'undefined') provider.key = data.key;
     if (typeof data.maxToken !== 'undefined') provider.maxToken = data.maxToken as number;
+    if (typeof data.defaultModel !== 'undefined') provider.defaultModel = data.defaultModel as number;
 
     await this.providerRepository.save(provider);
     return provider;

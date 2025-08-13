@@ -1,50 +1,115 @@
-import React, { useEffect, useState } from 'react';
-import { Settings as SettingsIcon } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Settings as SettingsIcon, Eye, EyeOff } from 'lucide-react';
+import { useHubspotParams } from '../context/HubspotParamsContext';
+import { getProviders, selectProvider, updateProvider } from '../service/provider.service';
 
-type AIEngine = 'deepseek' | 'gpt' | 'grok';
+type ProviderType = {
+  name: string;
+  model: string[];
+};
 
-const MODEL_OPTIONS: Record<AIEngine, string[]> = {
-  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
-  gpt: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini'],
-  grok: ['grok-2-mini', 'grok-2'],
+type Provider = {
+  id: string;
+  name: string;
+  key: string | null;
+  maxToken: number;
+  typeKey: string;
+  type: ProviderType;
+  isUsed: boolean;
+  defaultModel?: number | null;
 };
 
 const Settings: React.FC = () => {
-  const [engine, setEngine] = useState<AIEngine>('deepseek');
+  const { params } = useHubspotParams();
+  const portalId = params.portalId || '';
+
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
+  const [showKey, setShowKey] = useState<boolean>(false);
   const [model, setModel] = useState<string>('');
   const [maxTokens, setMaxTokens] = useState<number>(1000);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [savedBanner, setSavedBanner] = useState<string>('');
 
+  const selectedProvider = useMemo(() => providers.find(p => p.id === selectedProviderId), [providers, selectedProviderId]);
+
+  const pickModelByIndex = (models: string[], indexMaybe: number | null | undefined): string => {
+    if (!Array.isArray(models) || models.length === 0) return '';
+    const index = typeof indexMaybe === 'number' && indexMaybe >= 0 && indexMaybe < models.length ? indexMaybe : 0;
+    return models[index] ?? models[0] ?? '';
+  };
+
   useEffect(() => {
-    try {
-      const storedEngine = localStorage.getItem('settings.engine') as AIEngine | null;
-      const storedKey = localStorage.getItem('settings.apiKey');
-      const storedModel = localStorage.getItem('settings.model');
-      const storedMaxTokens = localStorage.getItem('settings.maxTokens');
-
-      const effectiveEngine = storedEngine ?? 'deepseek';
-      setEngine(effectiveEngine);
-      if (storedKey) setApiKey(storedKey);
-      if (storedModel) {
-        setModel(storedModel);
-      } else {
-        setModel(MODEL_OPTIONS[effectiveEngine][0]);
+    if (!portalId) return;
+    let isMounted = true;
+    const loadProviders = async () => {
+      setIsLoading(true);
+      try {
+        const res = await getProviders(portalId);
+        const list: Provider[] = Array.isArray(res?.data) ? res.data as Provider[] : [];
+        if (!isMounted) return;
+        setProviders(list);
+        const active = list.find(p => p.isUsed) || list[0];
+        if (active) {
+          setSelectedProviderId(active.id);
+          setApiKey(active.key || '');
+          setMaxTokens(typeof active.maxToken === 'number' ? active.maxToken : 0);
+          const models = Array.isArray(active.type?.model) ? active.type.model : [];
+          const nextModel = pickModelByIndex(models, active.defaultModel ?? null);
+          setModel(nextModel);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-      if (storedMaxTokens) setMaxTokens(Number(storedMaxTokens));
-    } catch {}
-  }, []);
+    };
+    loadProviders();
+    return () => {
+      isMounted = false;
+    };
+  }, [portalId]);
 
-  const handleSave = () => {
+  const handleEngineChange = async (providerId: string) => {
+    if (!portalId) return;
+    setIsLoading(true);
+    try {
+      await selectProvider(portalId, providerId);
+      const found = providers.find(p => p.id === providerId);
+      setSelectedProviderId(providerId);
+      if (found) {
+        setApiKey(found.key || '');
+        setMaxTokens(typeof found.maxToken === 'number' ? found.maxToken : 0);
+        const models = Array.isArray(found.type?.model) ? found.type.model : [];
+        const nextModel = pickModelByIndex(models, found.defaultModel ?? null);
+        setModel(nextModel);
+      }
+      setProviders(prev => prev.map(p => ({ ...p, isUsed: p.id === providerId })));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!portalId || !selectedProviderId) return;
     setIsSaving(true);
     try {
-      localStorage.setItem('settings.engine', engine);
-      localStorage.setItem('settings.apiKey', apiKey);
-      localStorage.setItem('settings.model', model);
-      localStorage.setItem('settings.maxTokens', String(maxTokens));
+      const models = selectedProvider?.type?.model || [];
+      const index = models.indexOf(model);
+      const defaultModelIndex = index >= 0 ? index : 0;
+      await updateProvider(portalId, selectedProviderId, { key: apiKey, maxToken: maxTokens, defaultModel: defaultModelIndex });
       setSavedBanner('Saved successfully');
       setTimeout(() => setSavedBanner(''), 2000);
+      try {
+        const refreshed = await getProviders(portalId);
+        const list: Provider[] = Array.isArray(refreshed?.data) ? refreshed.data as Provider[] : [];
+        setProviders(list);
+        // sync current model from refreshed provider data by defaultModel index
+        const now = list.find(p => p.id === selectedProviderId);
+        const models = now?.type?.model || [];
+        const nextModel = pickModelByIndex(models, now?.defaultModel ?? null);
+        setModel(nextModel);
+      } catch {}
     } finally {
       setIsSaving(false);
     }
@@ -67,20 +132,14 @@ const Settings: React.FC = () => {
         <div className="md:col-span-1">
           <label className="block text-sm font-medium text-slate-700 mb-2">AI Engine</label>
           <select
-            value={engine}
-            onChange={(e) => {
-              const newEngine = e.target.value as AIEngine;
-              setEngine(newEngine);
-              const options = MODEL_OPTIONS[newEngine];
-              if (!options.includes(model)) {
-                setModel(options[0]);
-              }
-            }}
+            value={selectedProviderId}
+            onChange={(e) => handleEngineChange(e.target.value)}
+            disabled={isLoading || !providers.length}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           >
-            <option value="deepseek">Deepseek</option>
-            <option value="gpt">GPT</option>
-            <option value="grok">Grok</option>
+            {providers.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
           </select>
         </div>
 
@@ -88,10 +147,24 @@ const Settings: React.FC = () => {
           <label className="block text-sm font-medium text-slate-700 mb-2">Model</label>
           <select
             value={model}
-            onChange={(e) => setModel(e.target.value)}
+            onChange={async (e) => {
+              const value = e.target.value;
+              setModel(value);
+              if (portalId && selectedProvider) {
+                const models = selectedProvider?.type?.model || [];
+                const index = models.indexOf(value);
+                const defaultModelIndex = index >= 0 ? index : 0;
+                try {
+                  await updateProvider(portalId, selectedProvider.id, { key: apiKey, maxToken: maxTokens, defaultModel: defaultModelIndex });
+                  // reflect in local state
+                  setProviders(prev => prev.map(p => p.id === selectedProvider.id ? { ...p, defaultModel: defaultModelIndex } : p));
+                } catch {}
+              }
+            }}
+            disabled={!selectedProvider || !(selectedProvider?.type?.model?.length)}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           >
-            {MODEL_OPTIONS[engine].map((m) => (
+            {(selectedProvider?.type?.model || []).map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
@@ -99,14 +172,24 @@ const Settings: React.FC = () => {
 
         <div className="md:col-span-1">
           <label className="block text-sm font-medium text-slate-700 mb-2">API Key</label>
-          <input
-            type="password"
-            placeholder="Enter your API key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
-          />
-          <p className="text-xs text-slate-500 mt-2">Your key is stored locally in your browser.</p>
+          <div className="relative">
+            <input
+              type={showKey ? 'text' : 'password'}
+              placeholder="Enter your API key"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="w-full px-4 py-2 pr-20 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
+            />
+            <button
+              type="button"
+              aria-label={showKey ? 'Hide API key' : 'Show API key'}
+              onClick={() => setShowKey((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#667eea] hover:text-[#5a6de0] p-1 rounded"
+            >
+              {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Key will be saved to your workspace settings.</p>
         </div>
 
         <div className="md:col-span-1">
@@ -119,14 +202,14 @@ const Settings: React.FC = () => {
             onChange={(e) => setMaxTokens(Number(e.target.value))}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
           />
-          <p className="text-xs text-slate-500 mt-2">Maximum tokens per response. Stored locally.</p>
+          <p className="text-xs text-slate-500 mt-2">Maximum tokens per response for this provider.</p>
         </div>
       </div>
 
       <div className="mt-6">
         <button
           onClick={handleSave}
-          disabled={isSaving || !apiKey.trim()}
+          disabled={isSaving || isLoading || !selectedProviderId}
           className="px-4 py-2 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
         >
           {isSaving ? 'Saving…' : 'Save'}

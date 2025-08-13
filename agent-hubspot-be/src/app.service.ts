@@ -103,10 +103,10 @@ export class AppService {
 
     // 4. Seed some example providers for this hubspot account (idempotent by name)
     const seedProviders = [
-      { name: 'ChatGPT', maxToken: 4096, prompt: 'ChatGPT default', typeKey: 'CHAT_GPT' as const, type: PROVIDER_TYPE_PRESETS.CHAT_GPT },
-      { name: 'Deepseek', maxToken: 8192, prompt: 'Deepseek default', typeKey: 'DEEPSEEK' as const, type: PROVIDER_TYPE_PRESETS.DEEPSEEK },
-      { name: 'Grok', maxToken: 4096, prompt: 'Grok default', typeKey: 'GROK' as const, type: PROVIDER_TYPE_PRESETS.GROK },
-      { name: 'Claude', maxToken: 4096, prompt: 'Claude default', typeKey: 'CLAUDE' as const, type: PROVIDER_TYPE_PRESETS.CLAUDE },
+      { name: 'ChatGPT', maxToken: 1000, prompt: 'ChatGPT default', typeKey: 'CHAT_GPT' as const, type: PROVIDER_TYPE_PRESETS.CHAT_GPT },
+      { name: 'Deepseek', maxToken: 1000, prompt: 'Deepseek default', typeKey: 'DEEPSEEK' as const, type: PROVIDER_TYPE_PRESETS.DEEPSEEK },
+      { name: 'Grok', maxToken: 1000, prompt: 'Grok default', typeKey: 'GROK' as const, type: PROVIDER_TYPE_PRESETS.GROK },
+      { name: 'Claude', maxToken: 1000, prompt: 'Claude default', typeKey: 'CLAUDE' as const, type: PROVIDER_TYPE_PRESETS.CLAUDE },
     ];
 
     for (const sp of seedProviders) {

@@ -25,7 +25,7 @@ export class ProvidersController {
   // PATCH /providers/:id?portalId=xxx { key?, maxToken? }
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @ApiOperation({ summary: 'Update provider key and maximum token' })
+  @ApiOperation({ summary: 'Update provider key, maximum token, and default model' })
   @ApiParam({ name: 'id', description: 'Provider id' })
   @ApiQuery({ name: 'portalId', required: true, description: 'Hubspot portal id' })
   @ApiBody({ type: UpdateProviderDto })

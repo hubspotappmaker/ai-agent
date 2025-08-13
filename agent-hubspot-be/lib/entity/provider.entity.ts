@@ -28,6 +28,9 @@ export class Provider extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   prompt: string | null;
 
+  @Column({ type: 'int', name: 'default_model', default: 0 })
+  defaultModel: number;
+
   @ManyToOne(() => Hubspot, (hubspot) => hubspot.providers, { onDelete: 'CASCADE' })
   hubspot: Hubspot;
 
