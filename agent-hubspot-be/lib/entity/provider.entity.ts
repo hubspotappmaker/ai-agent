@@ -30,5 +30,8 @@ export class Provider extends BaseEntity {
 
   @ManyToOne(() => Hubspot, (hubspot) => hubspot.providers, { onDelete: 'CASCADE' })
   hubspot: Hubspot;
+
+  @Column({ type: 'boolean', default: false, name: 'is_used' })
+  isUsed: boolean;
 }
 

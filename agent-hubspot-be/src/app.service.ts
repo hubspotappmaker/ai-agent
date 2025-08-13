@@ -114,6 +114,14 @@ export class AppService {
       if (!existed) {
         const provider = this.providerRepository.create({ ...sp, hubspot });
         await this.providerRepository.save(provider);
+      } else {
+        // ensure type is populated if missing from old data
+        if (!existed.type && existed.typeKey) {
+          const preset = (PROVIDER_TYPE_PRESETS as any)[existed.typeKey];
+          if (preset) {
+            await this.providerRepository.update(existed.id, { type: preset as any });
+          }
+        }
       }
     }
 

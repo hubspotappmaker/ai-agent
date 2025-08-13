@@ -9,6 +9,7 @@ import { RepositoriesModule } from 'lib/module/repository.module';
 import { TokenService } from '../lib/service/token.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { ProvidersModule } from './providers/providers.module';
 @Module({
   imports: [
     HttpModule,
@@ -35,6 +36,7 @@ import { UsersModule } from './users/users.module';
       inject: [ConfigService],
     }),
     UsersModule,
+    ProvidersModule,
   ],
   controllers: [AppController],
   providers: [AppService, TokenService],
