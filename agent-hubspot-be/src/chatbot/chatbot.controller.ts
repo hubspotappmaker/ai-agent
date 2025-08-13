@@ -21,9 +21,9 @@ import { ChatbotService } from './chatbot.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 
-@ApiTags('Chatbot')
+@ApiTags('chatbot')
 @ApiBearerAuth() // Hiển thị nút Authorize (Bearer token) trong Swagger UI
-@Controller()
+@Controller("chatbot")
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 

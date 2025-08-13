@@ -18,3 +18,8 @@ export const selectProvider = async (portalId: string, providerId: string) => {
     const URL_BACKEND = `/providers/${providerId}/select?portalId=${portalId}`;
     return await dataxios.post(URL_BACKEND)
 }
+
+export const getCurrentEngine = async (portalId: string) => {
+    const URL_BACKEND = `/providers/used?portalId=${portalId}`;
+    return await dataxios.get(URL_BACKEND)
+}

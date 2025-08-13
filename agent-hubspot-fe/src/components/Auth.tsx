@@ -3,7 +3,6 @@ import { Form, Input, Button, Card, Typography, message } from 'antd';
 import type { FormProps } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { login, register } from '../service/auth.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
 
@@ -162,30 +161,34 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   const [form] = Form.useForm<FormValues>();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [messageApi, contextHolder] = message.useMessage();
-  const navigate = useNavigate();
   const { navigateWithParams } = useHubspotParams();
 
   const handleSubmit = async (values: FormValues): Promise<void> => {
     setIsSubmitting(true);
-    try {
+    try
+    {
       const email = values.email.trim();
       const password = values.password;
-      if (activeTab === 'login') {
-        const res = await login(email, password);
+      if (activeTab === 'login')
+      {
+        const res: any = await login(email, password);
         // our axios wrapper returns { status, data, msg }
         const token = (res?.data?.accessToken) || (res?.data?.data?.accessToken);
-        if (token) {
+        if (token)
+        {
           messageApi.success('Signed in successfully!');
           onAuthSuccess?.(email);
           navigateWithParams('/', { replace: true });
           return;
         }
         throw new Error(res?.msg || 'Login failed');
-      } else {
+      } else
+      {
         const fullName = values.fullName?.trim() || '';
-        const res = await register(fullName, email, password);
+        const res: any = await register(fullName, email, password);
         const token = (res?.data?.accessToken) || (res?.data?.data?.accessToken);
-        if (token) {
+        if (token)
+        {
           messageApi.success('Account created successfully!');
           // After register, redirect to home (already authenticated)
           navigateWithParams('/', { replace: true });
@@ -193,9 +196,11 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         }
         throw new Error(res?.msg || 'Register failed');
       }
-    } catch (error: any) {
+    } catch (error: any)
+    {
       messageApi.error(error?.message || 'Something went wrong. Please try again.');
-    } finally {
+    } finally
+    {
       setIsSubmitting(false);
     }
   };
@@ -214,29 +219,29 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         <div className="floating-shape"></div>
         <div className="floating-shape"></div>
       </FloatingElements>
-      
+
       <AuthCard>
         <HeaderSection>
           <Title level={2} className="title">
             {activeTab === 'login' ? 'Welcome Back' : 'Create Account'}
           </Title>
           <Text className="subtitle">
-            {activeTab === 'login' 
-              ? 'Sign in to access your dashboard' 
+            {activeTab === 'login'
+              ? 'Sign in to access your dashboard'
               : 'Join us to get started'}
           </Text>
         </HeaderSection>
 
         <TabContainer>
-          <TabButton 
-            active={activeTab === 'login'} 
+          <TabButton
+            active={activeTab === 'login'}
             onClick={() => handleTabChange('login')}
             type="button"
           >
             Sign In
           </TabButton>
-          <TabButton 
-            active={activeTab === 'register'} 
+          <TabButton
+            active={activeTab === 'register'}
             onClick={() => handleTabChange('register')}
             type="button"
           >
@@ -306,8 +311,8 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               block
               size="large"
             >
-              {isSubmitting 
-                ? (activeTab === 'login' ? 'Signing in...' : 'Creating account...') 
+              {isSubmitting
+                ? (activeTab === 'login' ? 'Signing in...' : 'Creating account...')
                 : (activeTab === 'login' ? 'Sign In' : 'Create Account')
               }
             </StyledButton>
@@ -316,15 +321,15 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           <Text style={{ color: '#64748b', fontSize: '13px' }}>
-            {activeTab === 'login' 
-              ? "Don't have an account? " 
+            {activeTab === 'login'
+              ? "Don't have an account? "
               : "Already have an account? "}
-            <Text 
-              style={{ 
-                color: '#667eea', 
-                cursor: 'pointer', 
+            <Text
+              style={{
+                color: '#667eea',
+                cursor: 'pointer',
                 fontWeight: '500',
-                textDecoration: 'underline' 
+                textDecoration: 'underline'
               }}
               onClick={() => handleTabChange(activeTab === 'login' ? 'register' : 'login')}
             >
