@@ -109,6 +109,11 @@ const Chat: React.FC = () => {
     try
     {
       const res = await chatWithGpt(body);
+
+      if (res.status !== 201)
+      {
+        return;
+      }
       const payload = (res?.data ?? res);
 
       const serverStatus =

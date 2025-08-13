@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ChatWithMeDto } from './dto/chat-with-me.dto';
 import { ProviderRepository } from 'lib/repository/provider.repository';
 import { HubspotRepository } from 'lib/repository/hubspot.repository';
@@ -28,7 +28,7 @@ export class ChatbotService {
             throw new NotFoundException('ChatGPT provider is not active for this portal');
         }
         if (!provider.key) {
-            throw new UnauthorizedException('Provider API key is missing');
+            throw new BadRequestException('Provider API key is missing');
         }
 
         const preset = provider.type ? PROVIDER_TYPE_PRESETS[provider.typeKey] : undefined;
