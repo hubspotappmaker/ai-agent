@@ -10,6 +10,8 @@ import { TokenService } from '../lib/service/token.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProvidersModule } from './providers/providers.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
+import { EmailModule } from './email/email.module';
 @Module({
   imports: [
     HttpModule,
@@ -37,6 +39,8 @@ import { ProvidersModule } from './providers/providers.module';
     }),
     UsersModule,
     ProvidersModule,
+    ChatbotModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService, TokenService],

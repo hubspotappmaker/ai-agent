@@ -8,6 +8,7 @@ import { UserRepository } from 'lib/repository/user.repository';
 import { User } from 'lib/entity/user.entity';
 import { HubspotRepository } from 'lib/repository/hubspot.repository';
 import { ProviderRepository } from 'lib/repository/provider.repository';
+import { Provider } from 'lib/entity/provider.entity';
 import { Hubspot } from 'lib/entity/hubspot.entity';
 import { TokenService } from 'lib/service/token.service';
 import { GroupConfig } from 'lib/constant/hubspot.constants';
@@ -122,6 +123,21 @@ export class AppService {
             await this.providerRepository.update(existed.id, { type: preset as any });
           }
         }
+      }
+    }
+
+    // Ensure the first-created provider is selected by default if none selected yet
+    const numInUse = await this.providerRepository.count({ where: { hubspot: { id: hubspot.id } as any, isUsed: true } as any });
+    if (!numInUse) {
+      const firstProvider = await this.providerRepository.findOne({
+        where: { hubspot: { id: hubspot.id } as any },
+        order: { createdAt: 'ASC' },
+      });
+      if (firstProvider) {
+        await this.providerRepository.manager.transaction(async (manager) => {
+          await manager.update(Provider, { hubspot: { id: hubspot.id } as any }, { isUsed: false });
+          await manager.update(Provider, { id: firstProvider.id }, { isUsed: true });
+        });
       }
     }
 
