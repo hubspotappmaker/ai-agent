@@ -4,6 +4,7 @@ import { message } from 'antd';
 import { chatWithGpt } from '../service/chat.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
 import type { ChatMessage, ChatWithGptBody } from '../types/chat';
+import { getCurrentEngine } from '../service/provider.service';
 
 const Chat: React.FC = () => {
   const { params } = useHubspotParams();
@@ -42,6 +43,24 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    const fetchEngine = async () => {
+      try
+      {
+        const res = await getCurrentEngine(params.portalId!);
+        const payload = res?.data?.data ?? res?.data ?? null;
+        const typeKey = payload?.typeKey;
+        if (typeKey)
+        {
+          localStorage.setItem('current_engine', typeKey);
+
+        }
+      } catch
+      {
+      }
+    };
+    fetchEngine();
+  }, []);
   // Load history when portal changes
   useEffect(() => {
     const loaded = loadHistory(portalId);

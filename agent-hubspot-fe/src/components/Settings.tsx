@@ -46,13 +46,15 @@ const Settings: React.FC = () => {
     let isMounted = true;
     const loadProviders = async () => {
       setIsLoading(true);
-      try {
+      try
+      {
         const res = await getProviders(portalId);
         const list: Provider[] = Array.isArray(res?.data) ? res.data as Provider[] : [];
         if (!isMounted) return;
         setProviders(list);
         const active = list.find(p => p.isUsed) || list[0];
-        if (active) {
+        if (active)
+        {
           setSelectedProviderId(active.id);
           setApiKey(active.key || '');
           setMaxTokens(typeof active.maxToken === 'number' ? active.maxToken : 0);
@@ -60,7 +62,8 @@ const Settings: React.FC = () => {
           const nextModel = pickModelByIndex(models, active.defaultModel ?? null);
           setModel(nextModel);
         }
-      } finally {
+      } finally
+      {
         if (isMounted) setIsLoading(false);
       }
     };
@@ -73,11 +76,13 @@ const Settings: React.FC = () => {
   const handleEngineChange = async (providerId: string) => {
     if (!portalId) return;
     setIsLoading(true);
-    try {
+    try
+    {
       await selectProvider(portalId, providerId);
       const found = providers.find(p => p.id === providerId);
       setSelectedProviderId(providerId);
-      if (found) {
+      if (found)
+      {
         setApiKey(found.key || '');
         setMaxTokens(typeof found.maxToken === 'number' ? found.maxToken : 0);
         const models = Array.isArray(found.type?.model) ? found.type.model : [];
@@ -85,7 +90,8 @@ const Settings: React.FC = () => {
         setModel(nextModel);
       }
       setProviders(prev => prev.map(p => ({ ...p, isUsed: p.id === providerId })));
-    } finally {
+    } finally
+    {
       setIsLoading(false);
     }
   };
@@ -93,14 +99,16 @@ const Settings: React.FC = () => {
   const handleSave = async () => {
     if (!portalId || !selectedProviderId) return;
     setIsSaving(true);
-    try {
+    try
+    {
       const models = selectedProvider?.type?.model || [];
       const index = models.indexOf(model);
       const defaultModelIndex = index >= 0 ? index : 0;
       await updateProvider(portalId, selectedProviderId, { key: apiKey, maxToken: maxTokens, defaultModel: defaultModelIndex });
       setSavedBanner('Saved successfully');
       setTimeout(() => setSavedBanner(''), 2000);
-      try {
+      try
+      {
         const refreshed = await getProviders(portalId);
         const list: Provider[] = Array.isArray(refreshed?.data) ? refreshed.data as Provider[] : [];
         setProviders(list);
@@ -109,8 +117,9 @@ const Settings: React.FC = () => {
         const models = now?.type?.model || [];
         const nextModel = pickModelByIndex(models, now?.defaultModel ?? null);
         setModel(nextModel);
-      } catch {}
-    } finally {
+      } catch { }
+    } finally
+    {
       setIsSaving(false);
     }
   };
@@ -150,15 +159,17 @@ const Settings: React.FC = () => {
             onChange={async (e) => {
               const value = e.target.value;
               setModel(value);
-              if (portalId && selectedProvider) {
+              if (portalId && selectedProvider)
+              {
                 const models = selectedProvider?.type?.model || [];
                 const index = models.indexOf(value);
                 const defaultModelIndex = index >= 0 ? index : 0;
-                try {
+                try
+                {
                   await updateProvider(portalId, selectedProvider.id, { key: apiKey, maxToken: maxTokens, defaultModel: defaultModelIndex });
                   // reflect in local state
                   setProviders(prev => prev.map(p => p.id === selectedProvider.id ? { ...p, defaultModel: defaultModelIndex } : p));
-                } catch {}
+                } catch { }
               }
             }}
             disabled={!selectedProvider || !(selectedProvider?.type?.model?.length)}
