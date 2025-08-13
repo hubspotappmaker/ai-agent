@@ -39,6 +39,19 @@ export class ProvidersController {
     return this.providersService.updateProvider(userId, portalId, providerId, body);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('used')
+  @ApiOperation({ summary: 'Get provider is used by user' })
+  @ApiQuery({ name: 'portalId', required: true, description: 'Hubspot portal id' })
+  @ApiOkResponse({ type: Provider })
+  async usedByUser(
+    @CurrentUser('id') userId: string,
+    @Query('portalId') portalId: string,
+  ) {
+    
+    return this.providersService.getProviderIsUsed(userId, portalId);
+  }
+
   // GET /providers/:id?portalId=xxx
   @UseGuards(JwtAuthGuard)
   @Get(':id')
@@ -51,8 +64,11 @@ export class ProvidersController {
     @Param('id') providerId: string,
     @Query('portalId') portalId: string,
   ) {
+    console.log(userId, portalId);
     return this.providersService.getProviderDetail(userId, portalId, providerId);
   }
+
+
 
   // POST /providers/:id/select?portalId=xxx
   @UseGuards(JwtAuthGuard)

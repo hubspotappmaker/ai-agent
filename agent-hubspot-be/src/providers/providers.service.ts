@@ -80,4 +80,14 @@ export class ProvidersService {
     if (!provider) throw new NotFoundException('Provider not found');
     return provider;
   }
+
+  async getProviderIsUsed(userId: string, portalId: string) {
+    console.log(userId, portalId);
+    const hubspot = await this.hubspotRepository.findOne({ where: { portalId, user: { id: userId } } });
+    if (!hubspot) throw new NotFoundException('Hubspot portal not found');
+    console.log(hubspot);
+    const provider = await this.providerRepository.findOne({ where: {hubspot: { id: hubspot.id }, isUsed: true } });
+    if (!provider) throw new NotFoundException('Provider not found');
+    return provider;
+  }
 }
