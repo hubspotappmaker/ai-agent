@@ -495,12 +495,45 @@ const Chat: React.FC = () => {
           setIsModalVisible(false);
           setNewSampleChat('');
         }}
+        className="rounded-xl overflow-hidden"
+        styles={{
+          header: {
+            padding: '1.5rem',
+            paddingBottom: '0.5rem',
+            borderBottom: 'none',
+          },
+          body: {
+            padding: '1.5rem',
+            paddingTop: '0.5rem',
+          },
+          footer: {
+            padding: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid #e5e7eb',
+          },
+          content: {
+            borderRadius: '0.75rem',
+          },
+        }}
+        okButtonProps={{
+          style: {
+            backgroundColor: '#667eea',
+            borderColor: '#667eea',
+          },
+        }}
+        cancelButtonProps={{
+          style: {
+            borderColor: '#e5e7eb',
+            color: '#4b5563',
+          },
+        }}
       >
         <Input.TextArea
           value={newSampleChat}
           onChange={(e) => setNewSampleChat(e.target.value)}
           placeholder="Enter sample chat content"
           rows={4}
+          className="border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent resize-none"
         />
       </Modal>
     </div>

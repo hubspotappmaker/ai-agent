@@ -86,8 +86,8 @@ Marketing Team`,
       return;
     }
 
-    const label = predefinedPrompts[selectedPrompt as PredefinedKey] ?? 'Custom Prompt';
-    const plain = `Email generated from prompt: ${label}\n\n${customContent}`;
+    const label = predefinedPrompts[selectedPrompt as PredefinedKey] ?? 'Custom Tone';
+    const plain = `Email generated from tone: ${label}\n\n${customContent}`;
     setGeneratedEmail(plain);
     setGeneratedEmailHtml(plain.replace(/\n/g, '<br/>'));
   };
@@ -156,12 +156,12 @@ Marketing Team`,
           className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200"
         >
           <Plus className="w-4 h-4" />
-          New Prompt
+          New Tone
         </button>
       </div>
 
       <div className="mb-6">
-        <label className="block text-sm font-medium text-slate-700 mb-2">Email Template</label>
+        <label className="block text-sm font-medium text-slate-700 mb-2">Email Tone</label>
         <select
           value={selectedPrompt}
           onChange={(e) => setSelectedPrompt(e.target.value)}
@@ -262,11 +262,11 @@ Marketing Team`,
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Create New Prompt</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Create New Tone</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Prompt Title *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Tone Title *</label>
                 <input
                   type="text"
                   placeholder="e.g., Meeting Invitation Email"
@@ -277,7 +277,7 @@ Marketing Team`,
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Prompt Description *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Tone Description *</label>
                 <textarea
                   rows={3}
                   placeholder="Describe how to create this email..."
