@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { Mail, Plus, Trash2 } from 'lucide-react';
+import { Mail, Plus, Trash2, X } from 'lucide-react';
 import { getCurrentEngine } from '../service/provider.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
-import { getAllTone, createNewTone, deleteToneById, changeToDefault } from '../service/mail.service';
+import { getAllTone, createNewTone, deleteToneById, changeToDefault, generateEmail as generateEmailAPI } from '../service/mail.service';
 import { Modal } from 'antd';
 
 type Tone = {
@@ -25,6 +25,7 @@ const Email: React.FC = () => {
   const [tones, setTones] = useState<Tone[]>([]);
   const [isLoadingTones, setIsLoadingTones] = useState<boolean>(false);
   const [isCreatingTone, setIsCreatingTone] = useState<boolean>(false);
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState<boolean>(false);
   const [promptTitle, setPromptTitle] = useState('');
   const [promptContent, setPromptContent] = useState('');
   const [deletingToneId, setDeletingToneId] = useState<string | null>(null);
@@ -38,29 +39,109 @@ const Email: React.FC = () => {
   const [sendBanner, setSendBanner] = useState<string>('');
   const { params } = useHubspotParams();
 
-  const generateEmail = () => {
-    const selectedTone =
-      tones.find((tone) => tone.id === selectedPrompt) ||
-      tones.find((tone) => tone.isDefault) ||
-      tones[0];
-
-    if (selectedTone)
-    {
-      const emailContent = `Dear Sir/Madam,\n\n${selectedTone.description}\n\n${customContent}\n\nBest regards,\n[Your Name]`;
-      setGeneratedEmail(emailContent);
-      setGeneratedEmailHtml(emailContent.replace(/\n/g, '<br/>'));
+  const generateEmail = async () => {
+    if (!customContent.trim()) {
       return;
     }
 
-    // Fallback if no tone available (still avoid fake tones)
-    const plain = `${customContent}`;
-    setGeneratedEmail(plain);
-    setGeneratedEmailHtml(plain.replace(/\n/g, '<br/>'));
+    setIsGeneratingEmail(true);
+    try {
+      const selectedTone = tones.find((tone) => tone.id === selectedPrompt) || tones.find((tone) => tone.isDefault) || tones[0];
+      
+      // Prepare content with tone context
+      let contentToGenerate = customContent;
+      if (selectedTone) {
+        contentToGenerate = `Tone: ${selectedTone.title}\nTone Description: ${selectedTone.description}\n\nContent Request: ${customContent}`;
+      }
+
+      const response = await generateEmailAPI(params.portalId!, {
+        content: contentToGenerate
+      });
+
+      if (response?.status && response?.data) {
+        const emailContent = response.data;
+        setGeneratedEmail(emailContent);
+        setGeneratedEmailHtml(emailContent.replace(/\n/g, '<br/>'));
+      } else {
+        // Fallback if API fails
+        const fallbackContent = selectedTone 
+          ? `Dear Sir/Madam,\n\n${selectedTone.description}\n\n${customContent}\n\nBest regards,\n[Your Name]`
+          : customContent;
+        setGeneratedEmail(fallbackContent);
+        setGeneratedEmailHtml(fallbackContent.replace(/\n/g, '<br/>'));
+      }
+    } catch (error) {
+      console.error('Error generating email:', error);
+      // Fallback on error
+      const selectedTone = tones.find((tone) => tone.id === selectedPrompt) || tones.find((tone) => tone.isDefault) || tones[0];
+      const fallbackContent = selectedTone 
+        ? `Dear Sir/Madam,\n\n${selectedTone.description}\n\n${customContent}\n\nBest regards,\n[Your Name]`
+        : customContent;
+      setGeneratedEmail(fallbackContent);
+      setGeneratedEmailHtml(fallbackContent.replace(/\n/g, '<br/>'));
+    } finally {
+      setIsGeneratingEmail(false);
+    }
+  };
+
+  const clearGeneratedEmail = () => {
+    setGeneratedEmail('');
+    setGeneratedEmailHtml('');
+    setSendBanner('');
+    setCustomContent('');
+    try {
+      localStorage.removeItem('generated_email');
+      localStorage.removeItem('generated_email_html');
+      localStorage.removeItem('email_idea');
+    } catch {}
   };
 
   useEffect(() => {
-    if (generatedEmail)
-    {
+    // Load saved generated email on mount
+    try {
+      const saved = localStorage.getItem('generated_email');
+      const savedHtml = localStorage.getItem('generated_email_html');
+      const savedIdea = localStorage.getItem('email_idea');
+      if (saved) setGeneratedEmail(saved);
+      if (savedHtml) setGeneratedEmailHtml(savedHtml);
+      if (savedIdea) setCustomContent(savedIdea);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    // Persist generated email whenever it changes
+    try {
+      if (generatedEmail) {
+        localStorage.setItem('generated_email', generatedEmail);
+      } else {
+        localStorage.removeItem('generated_email');
+      }
+    } catch {}
+  }, [generatedEmail]);
+
+  useEffect(() => {
+    try {
+      if (generatedEmailHtml) {
+        localStorage.setItem('generated_email_html', generatedEmailHtml);
+      } else {
+        localStorage.removeItem('generated_email_html');
+      }
+    } catch {}
+  }, [generatedEmailHtml]);
+
+  useEffect(() => {
+    // Persist Email Idea
+    try {
+      if (customContent) {
+        localStorage.setItem('email_idea', customContent);
+      } else {
+        localStorage.removeItem('email_idea');
+      }
+    } catch {}
+  }, [customContent]);
+
+  useEffect(() => {
+    if (generatedEmail) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [generatedEmail]);
@@ -274,7 +355,7 @@ const Email: React.FC = () => {
       </div>
 
       <div className="mb-6">
-        <label className="block text-sm font-medium text-slate-700 mb-2">Additional Content</label>
+        <label className="block text-sm font-medium text-slate-700 mb-2">Email Idea</label>
         <textarea
           rows={4}
           placeholder="Enter specific content for your email..."
@@ -284,12 +365,25 @@ const Email: React.FC = () => {
         />
       </div>
 
-      <button
-        onClick={generateEmail}
-        className="w-full py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] transition-colors duration-200 font-medium"
-      >
-        Generate Email
-      </button>
+      <div className="flex gap-3">
+        <button
+          onClick={generateEmail}
+          disabled={isGeneratingEmail || !customContent.trim()}
+          className="flex-1 py-3 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isGeneratingEmail ? 'Generating…' : 'Generate Email'}
+        </button>
+        {generatedEmail && (
+          <button
+            onClick={clearGeneratedEmail}
+            className="px-4 py-3 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors duration-200"
+            title="Clear generated email"
+          >
+            <X className="w-4 h-4" />
+            Clear
+          </button>
+        )}
+      </div>
 
       {generatedEmail && (
         <div className="mt-6">

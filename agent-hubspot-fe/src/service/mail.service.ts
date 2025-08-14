@@ -22,3 +22,10 @@ export const changeToDefault = async (toneId: string) => {
     const URL_BACKEND = `/tones/${toneId}/default`;
     return await dataxios.post(URL_BACKEND)
 }
+
+export const generateEmail = async (portalId: string, data: {
+    content: string
+}) => {
+    const URL_BACKEND = `/email/generate?portalId=${portalId}`;
+    return await dataxios.post(URL_BACKEND, data)
+}
