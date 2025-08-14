@@ -18,8 +18,8 @@ export class TokenService {
         private readonly userRepository: UserRepository,
         private readonly hubspotRepository: HubspotRepository,
     ) {
-        this.clientId = "7618532b-e62d-431a-a2d1-036faaa3f506";
-        this.clientSecret = "d5711e85-fe83-4bfc-92c1-acc4fbb93a8a";
+        this.clientId = "daa63ac0-8181-44b8-a832-fce2f51c88a7";
+        this.clientSecret = "2e1bdcf2-0df8-4048-a6f2-b31aa668c194";
         this.redirectUri = "https://127.0.0.1:8386/oauth";
     }
 

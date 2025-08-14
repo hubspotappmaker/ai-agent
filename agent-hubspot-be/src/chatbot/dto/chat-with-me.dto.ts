@@ -30,6 +30,14 @@ export class ChatWithMeDto {
   @IsNotEmpty()
   portalId: string;
 
+  @ApiProperty({
+    description: 'HubSpot contact ID associated with the user',
+    example: 'abc123',
+  })
+  @IsString()
+  @IsNotEmpty()
+  contactId: string;
+
   @ApiPropertyOptional({
     description: 'Optional chat history. If omitted, service will use a default system+user prompt.',
     type: [ChatMessageDto],

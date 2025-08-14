@@ -8,4 +8,5 @@ export interface ChatMessage {
 export interface ChatWithGptBody {
     portalId: string;
     messages: ChatMessage[];
+    contactId?: string;
 }

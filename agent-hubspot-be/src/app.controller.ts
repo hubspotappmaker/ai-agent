@@ -22,13 +22,15 @@ export class AppController {
     @Query('state') userId: string,
     @Res() res: Response,
   ) {
-    if (!code) {
+    if (!code)
+    {
       throw new BadRequestException('Missing code parameter');
     }
 
     await this.appService.exchangeCodeForTokens(code, userId);
 
-    if (!userId) {
+    if (!userId)
+    {
       return res.redirect('https://www.hubspot.com/');
     }
 
@@ -58,7 +60,7 @@ export class AppController {
 
   @Get('test')
   async createIframe() {
-    return this.tokenService.getTokenPortalId("243415357")
+    return this.tokenService.getTokenPortalId("243429254")
   }
 
   @Get('get-hubspot-install-link')

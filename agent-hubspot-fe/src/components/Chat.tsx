@@ -14,6 +14,7 @@ interface SampleChat {
 const Chat: React.FC = () => {
   const { params } = useHubspotParams();
   const portalId = (params?.portalId || 'default').toString();
+  const objectId = params?.objectId;
 
   // --- State for sample chats ---
   const [sampleChats, setSampleChats] = useState<SampleChat[]>([]);
@@ -178,8 +179,7 @@ const Chat: React.FC = () => {
 
     // Only support CHAT_GPT engine for now
     const engine = localStorage.getItem('current_engine');
-    if (engine !== 'CHAT_GPT')
-    {
+    if (engine !== 'CHAT_GPT') {
       message.warning('This AI engine is not supported yet.');
       return;
     }
@@ -191,10 +191,13 @@ const Chat: React.FC = () => {
     setIsSending(true);
     setIsTyping(true);
 
-    const body: ChatWithGptBody = { portalId, messages: nextHistory };
+    const body: ChatWithGptBody = { 
+      portalId, 
+      messages: nextHistory,
+      contactId: objectId
+    };
 
-    try
-    {
+    try {
       const res = await chatWithGpt(body);
       if (!res.status)
       {

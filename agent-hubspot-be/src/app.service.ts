@@ -57,9 +57,11 @@ export class AppService {
       throw new BadRequestException('Failed to obtain access token');
     }
     const { access_token, refresh_token } = response.data;
-    if(userId) {
+    console.log('access_token', access_token);
+    if (userId)
+    {
       const hubspot = await this.syncHubspotAccount(access_token, refresh_token, userId);
-    return hubspot;
+      return hubspot;
     }
     return true;
   }
@@ -87,12 +89,14 @@ export class AppService {
 
     // 3. Upsert Hubspot account linked to the user
     const ownerUser = await this.userRepository.findOne({ where: { id: userId } });
-    if (!ownerUser) {
+    if (!ownerUser)
+    {
       throw new BadRequestException('Invalid user');
     }
 
     let hubspot = await this.hubspotRepository.findOne({ where: { portalId: portalId.toString(), user: { id: userId } as any } });
-    if (!hubspot) {
+    if (!hubspot)
+    {
       hubspot = this.hubspotRepository.create({ portalId: portalId.toString(), user: ownerUser });
     }
     hubspot.accountType = accountType;
@@ -110,16 +114,21 @@ export class AppService {
       { name: 'Claude', maxToken: 1000, prompt: 'Claude default', typeKey: 'CLAUDE' as const, type: PROVIDER_TYPE_PRESETS.CLAUDE },
     ];
 
-    for (const sp of seedProviders) {
+    for (const sp of seedProviders)
+    {
       const existed = await this.providerRepository.findOne({ where: { name: sp.name, hubspot: { id: hubspot.id } as any } });
-      if (!existed) {
+      if (!existed)
+      {
         const provider = this.providerRepository.create({ ...sp, hubspot });
         await this.providerRepository.save(provider);
-      } else {
+      } else
+      {
         // ensure type is populated if missing from old data
-        if (!existed.type && existed.typeKey) {
+        if (!existed.type && existed.typeKey)
+        {
           const preset = (PROVIDER_TYPE_PRESETS as any)[existed.typeKey];
-          if (preset) {
+          if (preset)
+          {
             await this.providerRepository.update(existed.id, { type: preset as any });
           }
         }
@@ -128,12 +137,14 @@ export class AppService {
 
     // Ensure the first-created provider is selected by default if none selected yet
     const numInUse = await this.providerRepository.count({ where: { hubspot: { id: hubspot.id } as any, isUsed: true } as any });
-    if (!numInUse) {
+    if (!numInUse)
+    {
       const firstProvider = await this.providerRepository.findOne({
         where: { hubspot: { id: hubspot.id } as any },
         order: { createdAt: 'ASC' },
       });
-      if (firstProvider) {
+      if (firstProvider)
+      {
         await this.providerRepository.manager.transaction(async (manager) => {
           await manager.update(Provider, { hubspot: { id: hubspot.id } as any }, { isUsed: false });
           await manager.update(Provider, { id: firstProvider.id }, { isUsed: true });

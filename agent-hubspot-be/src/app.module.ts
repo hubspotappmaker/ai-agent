@@ -6,7 +6,7 @@ import { HttpModule } from '@nestjs/axios';
 import * as path from "path";
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RepositoriesModule } from 'lib/module/repository.module';
-import { TokenService } from '../lib/service/token.service';
+import { TokenModule } from '../lib/module/token.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProvidersModule } from './providers/providers.module';
@@ -41,8 +41,9 @@ import { EmailModule } from './email/email.module';
     ProvidersModule,
     ChatbotModule,
     EmailModule,
+    TokenModule,
   ],
   controllers: [AppController],
-  providers: [AppService, TokenService],
+  providers: [AppService],
 })
 export class AppModule { }

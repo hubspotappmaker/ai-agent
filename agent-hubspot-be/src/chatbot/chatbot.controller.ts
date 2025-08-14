@@ -25,7 +25,7 @@ import { CurrentUser } from 'src/auth/current-user.decorator';
 @ApiBearerAuth() // Hiển thị nút Authorize (Bearer token) trong Swagger UI
 @Controller("chatbot")
 export class ChatbotController {
-  constructor(private readonly chatbotService: ChatbotService) {}
+  constructor(private readonly chatbotService: ChatbotService) { }
 
   @UseGuards(JwtAuthGuard)
   @Post('chat-with-gpt')
@@ -44,6 +44,7 @@ export class ChatbotController {
         summary: 'With custom messages',
         value: {
           portalId: 'abc123',
+          contactId: 'abc123',
           messages: [
             { role: 'system', content: 'You are a helpful assistant.' },
             { role: 'user', content: 'Give me a one-line joke.' },
