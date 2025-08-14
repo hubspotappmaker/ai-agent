@@ -9,12 +9,14 @@ import { DataSource } from "typeorm";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ProviderRepository } from "lib/repository/provider.repository";
 import { SampleChatRepository } from "lib/repository/sample-chat.repository";
+import { Tone } from "lib/entity/tone.entity";
+import { ToneRepository } from "lib/repository/tone.repository";
 
 
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([User, Hubspot, Provider, SampleChat])
+        TypeOrmModule.forFeature([User, Hubspot, Provider, SampleChat, Tone])
     ],
     providers: [
         {
@@ -40,13 +42,20 @@ import { SampleChatRepository } from "lib/repository/sample-chat.repository";
             inject: [DataSource],
             useFactory: (dataSource: DataSource) =>
                 dataSource.getRepository(SampleChat).extend({}),
+        },
+        {
+            provide: ToneRepository,
+            inject: [DataSource],
+            useFactory: (dataSource: DataSource) =>
+                dataSource.getRepository(Tone).extend({}),
         }
     ],
     exports: [
         UserRepository,
         HubspotRepository,
         ProviderRepository,
-        SampleChatRepository
+        SampleChatRepository,
+        ToneRepository
     ],
 })
 export class RepositoriesModule { }

@@ -1,21 +1,34 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { Mail, Plus } from 'lucide-react';
+import { Mail, Plus, Trash2 } from 'lucide-react';
 import { getCurrentEngine } from '../service/provider.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
+import { getAllTone, createNewTone, deleteToneById, changeToDefault } from '../service/mail.service';
+import { Modal } from 'antd';
 
-type CustomPrompt = { key: string; title: string; content: string };
+type Tone = {
+  id: string;
+  title: string;
+  description: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
 
 const Email: React.FC = () => {
-  const [selectedPrompt, setSelectedPrompt] = useState<string>('business');
+  const [selectedPrompt, setSelectedPrompt] = useState<string>('');
   const [customContent, setCustomContent] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [generatedEmailHtml, setGeneratedEmailHtml] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
-  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>([]);
+  const [tones, setTones] = useState<Tone[]>([]);
+  const [isLoadingTones, setIsLoadingTones] = useState<boolean>(false);
+  const [isCreatingTone, setIsCreatingTone] = useState<boolean>(false);
   const [promptTitle, setPromptTitle] = useState('');
   const [promptContent, setPromptContent] = useState('');
+  const [deletingToneId, setDeletingToneId] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const senderOptions = ['you@company.com', 'sales@company.com', 'support@company.com'];
   const recipientOptions = ['client.a@example.com', 'client.b@example.com', 'team@example.com'];
@@ -24,70 +37,23 @@ const Email: React.FC = () => {
   const [isSending, setIsSending] = useState<boolean>(false);
   const [sendBanner, setSendBanner] = useState<string>('');
   const { params } = useHubspotParams();
-  const predefinedPrompts = {
-    business: 'Professional Business Email',
-    thank: 'Thank You Email',
-    follow: 'Follow-up Email',
-    marketing: 'Marketing Email',
-  } as const;
-
-  type PredefinedKey = keyof typeof predefinedPrompts;
 
   const generateEmail = () => {
-    const sampleEmails: Record<PredefinedKey, string> = {
-      business: `Dear Sir/Madam,
+    const selectedTone =
+      tones.find((tone) => tone.id === selectedPrompt) ||
+      tones.find((tone) => tone.isDefault) ||
+      tones[0];
 
-I hope this email finds you well.
-
-${customContent}
-
-I look forward to collaborating with you in the near future.
-
-Best regards,
-[Your Name]`,
-      thank: `Dear Sir/Madam,
-
-I would like to express my sincere gratitude.
-
-${customContent}
-
-Thank you once again for your valuable time and consideration.
-
-Best regards,
-[Your Name]`,
-      follow: `Dear Sir/Madam,
-
-Thank you for taking the time to meet with us yesterday.
-
-${customContent}
-
-I will monitor the progress and report back to you next week.
-
-Best regards,
-[Your Name]`,
-      marketing: `Dear Valued Customer,
-
-We are excited to introduce our new product/service.
-
-${customContent}
-
-Contact us now to receive special offers!
-
-Best regards,
-Marketing Team`,
-    };
-
-    const isPredefinedKey = (key: string): key is PredefinedKey => key in predefinedPrompts;
-
-    if (isPredefinedKey(selectedPrompt))
+    if (selectedTone)
     {
-      setGeneratedEmail(sampleEmails[selectedPrompt]);
-      setGeneratedEmailHtml(sampleEmails[selectedPrompt].replace(/\n/g, '<br/>'));
+      const emailContent = `Dear Sir/Madam,\n\n${selectedTone.description}\n\n${customContent}\n\nBest regards,\n[Your Name]`;
+      setGeneratedEmail(emailContent);
+      setGeneratedEmailHtml(emailContent.replace(/\n/g, '<br/>'));
       return;
     }
 
-    const label = predefinedPrompts[selectedPrompt as PredefinedKey] ?? 'Custom Tone';
-    const plain = `Email generated from tone: ${label}\n\n${customContent}`;
+    // Fallback if no tone available (still avoid fake tones)
+    const plain = `${customContent}`;
     setGeneratedEmail(plain);
     setGeneratedEmailHtml(plain.replace(/\n/g, '<br/>'));
   };
@@ -99,6 +65,31 @@ Marketing Team`,
     }
   }, [generatedEmail]);
 
+  const fetchTones = async () => {
+    setIsLoadingTones(true);
+    try
+    {
+      const response = await getAllTone();
+      if (response?.status)
+      {
+        const list: Tone[] = response.data || [];
+        setTones(list);
+        // Set default selected tone if not selected or invalid
+        if (!selectedPrompt || !list.some((t) => t.id === selectedPrompt))
+        {
+          const def = list.find((t) => t.isDefault) || list[0];
+          if (def) setSelectedPrompt(def.id);
+        }
+      }
+    } catch (error)
+    {
+      console.error('Error fetching tones:', error);
+    } finally
+    {
+      setIsLoadingTones(false);
+    }
+  };
+
   useEffect(() => {
     const fetchEngine = async () => {
       try
@@ -109,13 +100,12 @@ Marketing Team`,
         if (typeKey)
         {
           localStorage.setItem('current_engine', typeKey);
-
         }
-      } catch
-      {
-      }
+      } catch { }
     };
     fetchEngine();
+    fetchTones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSendEmail = () => {
@@ -129,19 +119,63 @@ Marketing Team`,
     }, 800);
   };
 
-  const handleCreatePrompt = () => {
+  const handleCreateTone = async () => {
     if (promptTitle.trim() && promptContent.trim())
     {
-      const newPrompt = {
-        key: `custom_${Date.now()}`,
-        title: promptTitle,
-        content: promptContent,
-      };
-      setCustomPrompts([...customPrompts, newPrompt]);
-      setShowModal(false);
-      setPromptTitle('');
-      setPromptContent('');
+      setIsCreatingTone(true);
+      try
+      {
+        const response = await createNewTone({
+          title: promptTitle,
+          description: promptContent,
+        });
+        if (response?.status)
+        {
+          await fetchTones();
+          setShowModal(false);
+          setPromptTitle('');
+          setPromptContent('');
+        }
+      } catch (error)
+      {
+        console.error('Error creating tone:', error);
+      } finally
+      {
+        setIsCreatingTone(false);
+      }
     }
+  };
+
+  const confirmDeleteTone = (tone: Tone) => {
+    Modal.confirm({
+      icon: null,
+      title: 'Delete Tone',
+      content: (
+        <div className="text-slate-600">
+          Are you sure you want to delete the tone <span className="font-medium">{tone.title}</span>?
+        </div>
+      ),
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      okButtonProps: { style: { backgroundColor: '#667eea', color: 'white' } },
+      onOk: async () => {
+        setDeletingToneId(tone.id);
+        try
+        {
+          const response = await deleteToneById(tone.id);
+          if (response?.status)
+          {
+            await fetchTones();
+          }
+        } catch (error)
+        {
+          console.error('Error deleting tone:', error);
+        } finally
+        {
+          setDeletingToneId(null);
+        }
+      },
+    });
   };
 
   return (
@@ -162,21 +196,81 @@ Marketing Team`,
 
       <div className="mb-6">
         <label className="block text-sm font-medium text-slate-700 mb-2">Email Tone</label>
-        <select
-          value={selectedPrompt}
-          onChange={(e) => setSelectedPrompt(e.target.value)}
-          className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
-        >
-          <option value="business">Business Email</option>
-          <option value="thank">Thank You Email</option>
-          <option value="follow">Follow-up Email</option>
-          <option value="marketing">Marketing Email</option>
-          {customPrompts.map((prompt) => (
-            <option key={prompt.key} value={prompt.key}>
-              {prompt.title}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <div
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-[#667eea] focus-within:border-transparent flex items-center justify-between cursor-pointer"
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            <div className="flex-1 truncate">
+              {selectedPrompt && tones.length > 0 ? (
+                <>
+                  {tones.find(tone => tone.id === selectedPrompt)?.title}
+                  {tones.find(tone => tone.id === selectedPrompt)?.isDefault && (
+                    <span className="inline-block ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">Default</span>
+                  )}
+                </>
+              ) : (
+                isLoadingTones ? 'Loading tones...' : 'Select a tone'
+              )}
+            </div>
+            <svg className={`w-5 h-5 text-gray-400 transition-transform ${showDropdown ? 'transform rotate-180' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+
+          {showDropdown && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {tones.length === 0 ? (
+                <div className="px-4 py-2 text-sm text-slate-500">No tones available</div>
+              ) : (
+                tones.map((tone) => (
+                  <div key={tone.id} className="border-b border-slate-100 last:border-b-0">
+                    <div className="flex items-center justify-between px-4 py-2 hover:bg-slate-50">
+                      <div
+                        className="flex-1 cursor-pointer"
+                        onClick={async () => {
+                          setSelectedPrompt(tone.id);
+                          setShowDropdown(false);
+                          try
+                          {
+                            await changeToDefault(tone.id);
+                            await fetchTones();
+                          } catch (error)
+                          {
+                            console.error('Error setting default tone:', error);
+                          }
+                        }}
+                      >
+                        <div className="font-medium text-slate-800">{tone.title}</div>
+                        <div className="text-xs text-slate-500 truncate">{tone.description}</div>
+                        {tone.isDefault && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">Default</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmDeleteTone(tone);
+                        }}
+                        disabled={deletingToneId === tone.id}
+                        className="ml-2 p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                        title="Delete tone"
+                      >
+                        {deletingToneId === tone.id ? (
+                          <div className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        {/* {isLoadingTones && <p className="text-sm text-slate-500 mt-1">Loading tones...</p>} */}
       </div>
 
       <div className="mb-6">
@@ -201,19 +295,11 @@ Marketing Team`,
         <div className="mt-6">
           <h4 className="text-sm font-medium text-slate-700 mb-3">Generated Email</h4>
           <div className="bg-white border border-slate-200 rounded-lg">
-            <ReactQuill
-              theme="snow"
-              value={generatedEmailHtml}
-              onChange={setGeneratedEmailHtml}
-              className="min-h-[200px]"
-            />
+            <ReactQuill theme="snow" value={generatedEmailHtml} onChange={setGeneratedEmailHtml} className="min-h-[200px]" />
           </div>
-          {/* Send panel */}
           <div className="mt-4 border border-slate-200 rounded-lg p-4">
             {sendBanner && (
-              <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-2 text-xs">
-                {sendBanner}
-              </div>
+              <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-2 text-xs">{sendBanner}</div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -296,10 +382,11 @@ Marketing Team`,
                 Cancel
               </button>
               <button
-                onClick={handleCreatePrompt}
-                className="flex-1 py-2 px-4 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] transition-colors duration-200"
+                onClick={handleCreateTone}
+                disabled={isCreatingTone}
+                className="flex-1 py-2 px-4 bg-[#667eea] text-white rounded-lg hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
-                Create
+                {isCreatingTone ? 'Creating...' : 'Create'}
               </button>
             </div>
           </div>
@@ -310,5 +397,3 @@ Marketing Team`,
 };
 
 export default Email;
-
-
