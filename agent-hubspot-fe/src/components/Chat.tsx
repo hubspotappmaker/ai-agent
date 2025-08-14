@@ -1,14 +1,82 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Send, User, Bot, Trash2, Download, Upload } from 'lucide-react';
-import { message } from 'antd';
-import { chatWithGpt } from '../service/chat.service';
+import { Send, User, Bot, Trash2, Download, Upload, Plus, X } from 'lucide-react';
+import { message, Modal, Input } from 'antd';
+import { chatWithGpt, getSampleChats, createSampleChat, deleteSampleChat } from '../service/chat.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
 import type { ChatMessage, ChatWithGptBody } from '../types/chat';
 import { getCurrentEngine } from '../service/provider.service';
 
+interface SampleChat {
+  id: string;
+  content: string;
+}
+
 const Chat: React.FC = () => {
   const { params } = useHubspotParams();
   const portalId = (params?.portalId || 'default').toString();
+
+  // --- State for sample chats ---
+  const [sampleChats, setSampleChats] = useState<SampleChat[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [newSampleChat, setNewSampleChat] = useState('');
+  const [hoveredSampleId, setHoveredSampleId] = useState<string | null>(null);
+
+  // --- Sample chat actions ---
+  const fetchSampleChats = async () => {
+    try
+    {
+      const res = await getSampleChats(portalId);
+      if (res.status && Array.isArray(res.data))
+      {
+        setSampleChats(res.data);
+      }
+    } catch (error)
+    {
+      message.error('Failed to load sample chats');
+    }
+  };
+
+  const handleAddSampleChat = async () => {
+    if (!newSampleChat.trim())
+    {
+      message.warning('Please enter some content');
+      return;
+    }
+
+    try
+    {
+      const res = await createSampleChat(portalId, { content: newSampleChat.trim() });
+      if (res.status)
+      {
+        message.success('Sample chat added');
+        setIsModalVisible(false);
+        setNewSampleChat('');
+        fetchSampleChats(); // Refresh the list
+      }
+    } catch (error)
+    {
+      message.error('Failed to add sample chat');
+    }
+  };
+
+  const handleDeleteSampleChat = async (id: string) => {
+    try
+    {
+      const res = await deleteSampleChat(portalId, id);
+      if (res.status)
+      {
+        message.success('Sample chat deleted');
+        fetchSampleChats(); // Refresh the list
+      }
+    } catch (error)
+    {
+      message.error('Failed to delete sample chat');
+    }
+  };
+
+  useEffect(() => {
+    fetchSampleChats();
+  }, [portalId]);
 
   // --- LocalStorage helpers ---
   const getChatKey = (pid: string) => `chat.history.${pid}`;
@@ -53,7 +121,6 @@ const Chat: React.FC = () => {
         if (typeKey)
         {
           localStorage.setItem('current_engine', typeKey);
-
         }
       } catch
       {
@@ -61,6 +128,7 @@ const Chat: React.FC = () => {
     };
     fetchEngine();
   }, []);
+
   // Load history when portal changes
   useEffect(() => {
     const loaded = loadHistory(portalId);
@@ -104,9 +172,9 @@ const Chat: React.FC = () => {
   };
 
   // --- Actions ---
-  const handleSend = async () => {
-    const text = inputValue.trim();
-    if (!text || isSending) return;
+  const handleSend = async (text?: string) => {
+    const messageText = text || inputValue.trim();
+    if (!messageText || isSending) return;
 
     // Only support CHAT_GPT engine for now
     const engine = localStorage.getItem('current_engine');
@@ -116,7 +184,7 @@ const Chat: React.FC = () => {
       return;
     }
 
-    const userMsg: ChatMessage = { role: 'user', content: text };
+    const userMsg: ChatMessage = { role: 'user', content: messageText };
     const nextHistory = [...history, userMsg];
     setHistory(nextHistory);
     setInputValue('');
@@ -128,7 +196,6 @@ const Chat: React.FC = () => {
     try
     {
       const res = await chatWithGpt(body);
-      console.log("check res status: ", res)
       if (!res.status)
       {
         return;
@@ -274,7 +341,6 @@ const Chat: React.FC = () => {
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) onFileChosen(f);
-          // reset to allow choosing same file again
           if (fileInputRef.current) fileInputRef.current.value = '';
         }}
       />
@@ -316,6 +382,7 @@ const Chat: React.FC = () => {
         </div>
       </div>
 
+      {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2" style={{ scrollbarWidth: 'thin' }}>
         {history.map((msg, idx) => {
           const isUser = msg.role === 'user';
@@ -358,7 +425,7 @@ const Chat: React.FC = () => {
         </div>
         <button
           style={{ marginBottom: '10px' }}
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={!inputValue.trim() || isSending}
           className="px-4 py-3 bg-[#667eea] text-white rounded-xl hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
           title={isSending ? 'Sending...' : 'Send'}
@@ -366,6 +433,73 @@ const Chat: React.FC = () => {
           <Send className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Sample Chats Section */}
+      <div className="mt-4 flex items-center gap-2 ">
+        <button
+          style={{
+            color: 'white',
+            backgroundColor: '#667eea',
+          }}
+          onClick={() => setIsModalVisible(true)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50"
+          title="Add Sample Chat"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Sample</span>
+        </button>
+
+        {sampleChats.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {sampleChats.map((sample) => (
+              <div
+                key={sample.id}
+                className="relative group"
+                onMouseEnter={() => setHoveredSampleId(sample.id)}
+                onMouseLeave={() => setHoveredSampleId(null)}
+              >
+                <button
+                  onClick={() => {
+                    handleSend(sample.content);
+                  }}
+                  className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors duration-200"
+                >
+                  {sample.content}
+                </button>
+                {hoveredSampleId === sample.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteSampleChat(sample.id);
+                    }}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Add Sample Chat Modal */}
+      <Modal
+        title="Add Sample Chat"
+        open={isModalVisible}
+        onOk={handleAddSampleChat}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setNewSampleChat('');
+        }}
+      >
+        <Input.TextArea
+          value={newSampleChat}
+          onChange={(e) => setNewSampleChat(e.target.value)}
+          placeholder="Enter sample chat content"
+          rows={4}
+        />
+      </Modal>
     </div>
   );
 };

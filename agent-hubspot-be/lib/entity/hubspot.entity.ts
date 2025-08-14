@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'ty
 import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
 import { Provider } from './provider.entity';
+import { SampleChat } from './sample-chat.entity';
 
 @Entity({ name: 'hubspots' })
 export class Hubspot extends BaseEntity {
@@ -29,8 +30,8 @@ export class Hubspot extends BaseEntity {
   @OneToMany(() => Provider, (provider) => provider.hubspot, { cascade: true })
   providers?: Provider[];
 
-  @Column({ type: 'text', name: 'sample_chat', nullable: true })
-  sampleChat: string | null;
+  @OneToMany(() => SampleChat, (sampleChat) => sampleChat.hubspot, { cascade: true })
+  sampleChats?: SampleChat[];
 
 }
 

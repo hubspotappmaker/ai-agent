@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { Mail, Plus } from 'lucide-react';
+import { getCurrentEngine } from '../service/provider.service';
+import { useHubspotParams } from '../context/HubspotParamsContext';
 
 type CustomPrompt = { key: string; title: string; content: string };
 
@@ -21,7 +23,7 @@ const Email: React.FC = () => {
   const [recipient, setRecipient] = useState<string>('client.a@example.com');
   const [isSending, setIsSending] = useState<boolean>(false);
   const [sendBanner, setSendBanner] = useState<string>('');
-
+  const { params } = useHubspotParams();
   const predefinedPrompts = {
     business: 'Professional Business Email',
     thank: 'Thank You Email',
@@ -77,7 +79,8 @@ Marketing Team`,
 
     const isPredefinedKey = (key: string): key is PredefinedKey => key in predefinedPrompts;
 
-    if (isPredefinedKey(selectedPrompt)) {
+    if (isPredefinedKey(selectedPrompt))
+    {
       setGeneratedEmail(sampleEmails[selectedPrompt]);
       setGeneratedEmailHtml(sampleEmails[selectedPrompt].replace(/\n/g, '<br/>'));
       return;
@@ -90,10 +93,30 @@ Marketing Team`,
   };
 
   useEffect(() => {
-    if (generatedEmail) {
+    if (generatedEmail)
+    {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [generatedEmail]);
+
+  useEffect(() => {
+    const fetchEngine = async () => {
+      try
+      {
+        const res = await getCurrentEngine(params.portalId!);
+        const payload = res?.data?.data ?? res?.data ?? null;
+        const typeKey = payload?.typeKey;
+        if (typeKey)
+        {
+          localStorage.setItem('current_engine', typeKey);
+
+        }
+      } catch
+      {
+      }
+    };
+    fetchEngine();
+  }, []);
 
   const handleSendEmail = () => {
     if (!sender || !recipient || !generatedEmail) return;
@@ -107,7 +130,8 @@ Marketing Team`,
   };
 
   const handleCreatePrompt = () => {
-    if (promptTitle.trim() && promptContent.trim()) {
+    if (promptTitle.trim() && promptContent.trim())
+    {
       const newPrompt = {
         key: `custom_${Date.now()}`,
         title: promptTitle,
