@@ -33,8 +33,8 @@ export class AppService {
     // this.clientSecret = this.config.get<string>('HUBSPOT_CLIENT_SECRET')!;
     // this.redirectUri = this.config.get<string>('HUBSPOT_REDIRECT_URI')!;
 
-    this.clientId = "daa63ac0-8181-44b8-a832-fce2f51c88a7";
-    this.clientSecret = "2e1bdcf2-0df8-4048-a6f2-b31aa668c194";
+    this.clientId = "86af71d9-bd1b-4fe1-afb8-1fff8bc0e181";
+    this.clientSecret = "e7a49550-a4bc-420c-964c-f5dabe176635";
     this.redirectUri = "https://127.0.0.1:8386/oauth";
 
   }

@@ -18,8 +18,8 @@ export class TokenService {
         private readonly userRepository: UserRepository,
         private readonly hubspotRepository: HubspotRepository,
     ) {
-        this.clientId = "daa63ac0-8181-44b8-a832-fce2f51c88a7";
-        this.clientSecret = "2e1bdcf2-0df8-4048-a6f2-b31aa668c194";
+        this.clientId = "86af71d9-bd1b-4fe1-afb8-1fff8bc0e181";
+        this.clientSecret = "e7a49550-a4bc-420c-964c-f5dabe176635";
         this.redirectUri = "https://127.0.0.1:8386/oauth";
     }
 
@@ -27,7 +27,8 @@ export class TokenService {
         const hubspot = await this.hubspotRepository.findOne({
             where: { portalId: portalId }
         });
-        if (!hubspot) {
+        if (!hubspot)
+        {
             return '';
         }
         const last_time = hubspot.updatedAt;
@@ -39,7 +40,8 @@ export class TokenService {
         const diffMs = current_time.getTime() - new Date(last_time).getTime();
         const diffMinutes = diffMs / (1000 * 60);
 
-        if (diffMinutes > 25) {
+        if (diffMinutes > 25)
+        {
             // Refresh token
             const url = 'https://api.hubapi.com/oauth/v1/token';
             const payload = querystring.stringify({
@@ -54,19 +56,22 @@ export class TokenService {
             const response$ = this.http.post(url, payload, { headers });
             const response = await firstValueFrom(response$);
 
-            if (!response?.data?.access_token) {
+            if (!response?.data?.access_token)
+            {
                 throw new BadRequestException('Failed to refresh access token');
             }
 
             // Update hubspot account in DB
             hubspot.accessToken = response.data.access_token;
-            if (response.data.refresh_token) {
+            if (response.data.refresh_token)
+            {
                 hubspot.refreshToken = response.data.refresh_token;
             }
             await this.hubspotRepository.save(hubspot);
             console.log(hubspot.accessToken);
             return hubspot.accessToken;
-        } else {
+        } else
+        {
             // Chưa hết hạn, trả ra token hiện tại
             return access_token;
         }

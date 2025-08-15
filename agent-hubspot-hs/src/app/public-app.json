@@ -1,15 +1,22 @@
 {
   "name": "AI Chatbot and Email Writer by Nexce.io)",
-  "uid": "nexce-ai-agent-hubspot-hs",
+  "uid": "nexce-ai-agent-hubspot",
   "description": "An example to demonstrate how to build a public app with developer projects.",
-  "allowedUrls": ["https://127.0.0.1:8386/"],
+  "allowedUrls": [
+    "https://127.0.0.1:8386/"
+  ],
   "auth": {
-    "redirectUrls": ["https://127.0.0.1:8386/oauth"],
+    "redirectUrls": [
+      "https://127.0.0.1:8386/oauth"
+    ],
     "requiredScopes": [
-      "crm.objects.contacts.read", 
+      "crm.objects.contacts.read",
       "crm.objects.contacts.write",
-         "settings.users.read",
-      "crm.objects.users.read"
+      "settings.users.read",
+      "crm.objects.users.read",
+      "marketing-email",
+      "transactional-email",
+      "content"
     ],
     "optionalScopes": [],
     "conditionallyRequiredScopes": []

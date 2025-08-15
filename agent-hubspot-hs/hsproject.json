@@ -1,5 +1,5 @@
 {
-  "name": "agent-hubspot-hs",
+  "name": "agent-hubspot",
   "srcDir": "src",
   "platformVersion": "2025.1"
 }
