@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import JoditEditor from 'jodit-react';
 import { Mail, Plus, Trash2, X } from 'lucide-react';
 import { getCurrentEngine } from '../service/provider.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
@@ -40,17 +39,20 @@ const Email: React.FC = () => {
   const { params } = useHubspotParams();
 
   const generateEmail = async () => {
-    if (!customContent.trim()) {
+    if (!customContent.trim())
+    {
       return;
     }
 
     setIsGeneratingEmail(true);
-    try {
+    try
+    {
       const selectedTone = tones.find((tone) => tone.id === selectedPrompt) || tones.find((tone) => tone.isDefault) || tones[0];
-      
+
       // Prepare content with tone context
       let contentToGenerate = customContent;
-      if (selectedTone) {
+      if (selectedTone)
+      {
         contentToGenerate = `Tone: ${selectedTone.title}\nTone Description: ${selectedTone.description}\n\nContent Request: ${customContent}`;
       }
 
@@ -58,28 +60,32 @@ const Email: React.FC = () => {
         content: contentToGenerate
       });
 
-      if (response?.status && response?.data) {
+      if (response?.status && response?.data)
+      {
         const emailContent = response.data;
         setGeneratedEmail(emailContent);
         setGeneratedEmailHtml(emailContent.replace(/\n/g, '<br/>'));
-      } else {
+      } else
+      {
         // Fallback if API fails
-        const fallbackContent = selectedTone 
+        const fallbackContent = selectedTone
           ? `Dear Sir/Madam,\n\n${selectedTone.description}\n\n${customContent}\n\nBest regards,\n[Your Name]`
           : customContent;
         setGeneratedEmail(fallbackContent);
         setGeneratedEmailHtml(fallbackContent.replace(/\n/g, '<br/>'));
       }
-    } catch (error) {
+    } catch (error)
+    {
       console.error('Error generating email:', error);
       // Fallback on error
       const selectedTone = tones.find((tone) => tone.id === selectedPrompt) || tones.find((tone) => tone.isDefault) || tones[0];
-      const fallbackContent = selectedTone 
+      const fallbackContent = selectedTone
         ? `Dear Sir/Madam,\n\n${selectedTone.description}\n\n${customContent}\n\nBest regards,\n[Your Name]`
         : customContent;
       setGeneratedEmail(fallbackContent);
       setGeneratedEmailHtml(fallbackContent.replace(/\n/g, '<br/>'));
-    } finally {
+    } finally
+    {
       setIsGeneratingEmail(false);
     }
   };
@@ -89,59 +95,71 @@ const Email: React.FC = () => {
     setGeneratedEmailHtml('');
     setSendBanner('');
     setCustomContent('');
-    try {
+    try
+    {
       localStorage.removeItem('generated_email');
       localStorage.removeItem('generated_email_html');
       localStorage.removeItem('email_idea');
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
     // Load saved generated email on mount
-    try {
+    try
+    {
       const saved = localStorage.getItem('generated_email');
       const savedHtml = localStorage.getItem('generated_email_html');
       const savedIdea = localStorage.getItem('email_idea');
       if (saved) setGeneratedEmail(saved);
       if (savedHtml) setGeneratedEmailHtml(savedHtml);
       if (savedIdea) setCustomContent(savedIdea);
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
     // Persist generated email whenever it changes
-    try {
-      if (generatedEmail) {
+    try
+    {
+      if (generatedEmail)
+      {
         localStorage.setItem('generated_email', generatedEmail);
-      } else {
+      } else
+      {
         localStorage.removeItem('generated_email');
       }
-    } catch {}
+    } catch { }
   }, [generatedEmail]);
 
   useEffect(() => {
-    try {
-      if (generatedEmailHtml) {
+    try
+    {
+      if (generatedEmailHtml)
+      {
         localStorage.setItem('generated_email_html', generatedEmailHtml);
-      } else {
+      } else
+      {
         localStorage.removeItem('generated_email_html');
       }
-    } catch {}
+    } catch { }
   }, [generatedEmailHtml]);
 
   useEffect(() => {
     // Persist Email Idea
-    try {
-      if (customContent) {
+    try
+    {
+      if (customContent)
+      {
         localStorage.setItem('email_idea', customContent);
-      } else {
+      } else
+      {
         localStorage.removeItem('email_idea');
       }
-    } catch {}
+    } catch { }
   }, [customContent]);
 
   useEffect(() => {
-    if (generatedEmail) {
+    if (generatedEmail)
+    {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [generatedEmail]);
@@ -389,7 +407,27 @@ const Email: React.FC = () => {
         <div className="mt-6">
           <h4 className="text-sm font-medium text-slate-700 mb-3">Generated Email</h4>
           <div className="bg-white border border-slate-200 rounded-lg">
-            <ReactQuill theme="snow" value={generatedEmailHtml} onChange={setGeneratedEmailHtml} className="min-h-[200px]" />
+            <JoditEditor
+              value={generatedEmailHtml}
+              onChange={(newContent) => setGeneratedEmailHtml(newContent)}
+              className="min-h-[200px]"
+              config={{
+                readonly: false,
+                height: 300,
+                toolbarSticky: false,
+                toolbarAdaptive: false,
+                removeButtons: [],
+                buttons: [
+                  'source', '|',
+                  'bold', 'italic', 'underline', 'strikethrough', 'eraser', '|',
+                  'ul', 'ol', '|',
+                  'font', 'fontsize', 'brush', 'paragraph', '|',
+                  'image', 'table', 'link', '|',
+                  'left', 'center', 'right', 'justify', '|',
+                  'undo', 'redo', 'fullsize'
+                ]
+              }}
+            />
           </div>
           <div className="mt-4 border border-slate-200 rounded-lg p-4">
             {sendBanner && (
