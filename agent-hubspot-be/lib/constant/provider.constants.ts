@@ -1,7 +1,14 @@
 export const PROVIDER_TYPE_PRESETS = {
   CHAT_GPT: {
     name: 'chatgpt',
-    model: ['gpt-4o', 'gpt-4o-mini'],
+    model: [
+      'gpt-4o', 
+      'gpt-4o-mini',
+      'gpt-4.1',
+      'gpt-4.1-mini',
+      'o4-mini',
+      'o3-mini',
+    ],
   },
   DEEPSEEK: {
     name: 'deepseek',

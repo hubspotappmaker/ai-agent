@@ -46,6 +46,12 @@ const Email: React.FC = () => {
       return;
     }
 
+    // Clear saved template ID when generating new email
+    setSavedTemplateId(null);
+    try {
+      localStorage.removeItem('saved_template_id');
+    } catch { }
+
     setIsGeneratingEmail(true);
     try
     {
@@ -103,6 +109,7 @@ const Email: React.FC = () => {
       localStorage.removeItem('generated_email');
       localStorage.removeItem('generated_email_html');
       localStorage.removeItem('email_idea');
+      localStorage.removeItem('saved_template_id');
     } catch { }
   };
 
@@ -113,9 +120,11 @@ const Email: React.FC = () => {
       const saved = localStorage.getItem('generated_email');
       const savedHtml = localStorage.getItem('generated_email_html');
       const savedIdea = localStorage.getItem('email_idea');
+      const savedTemplateIdFromStorage = localStorage.getItem('saved_template_id');
       if (saved) setGeneratedEmail(saved);
       if (savedHtml) setGeneratedEmailHtml(savedHtml);
       if (savedIdea) setCustomContent(savedIdea);
+      if (savedTemplateIdFromStorage) setSavedTemplateId(savedTemplateIdFromStorage);
     } catch { }
   }, []);
 
@@ -236,7 +245,16 @@ const Email: React.FC = () => {
       {
         message.success('Template saved successfully');
         console.log('[SaveTemplate] Saved:', response.data);
-        setSavedTemplateId(response.data?.id?.toString() || null);
+        const templateId = response.data?.id?.toString() || null;
+        setSavedTemplateId(templateId);
+        // Save template ID to localStorage
+        try {
+          if (templateId) {
+            localStorage.setItem('saved_template_id', templateId);
+          } else {
+            localStorage.removeItem('saved_template_id');
+          }
+        } catch { }
       } else
       {
         message.error('Failed to save template');
@@ -515,7 +533,12 @@ const Email: React.FC = () => {
                     </a>
 
                     <button
-                      onClick={() => setSavedTemplateId(null)}
+                      onClick={() => {
+                        setSavedTemplateId(null);
+                        try {
+                          localStorage.removeItem('saved_template_id');
+                        } catch { }
+                      }}
                       className="px-3 py-1.5 text-slate-600 hover:bg-blue-100 rounded-md transition-colors duration-200 text-xs font-medium"
                     >
                       Dismiss
