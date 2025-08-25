@@ -4,10 +4,11 @@ import { EmailController } from './email.controller';
 import { ToneController } from './tone.controller';
 import { ToneService } from './tone.service';
 import { RepositoriesModule } from 'lib/module/repository.module';
+import { TokenModule } from 'lib/module/token.module';
 
 @Module({
-  imports: [RepositoriesModule],
+  imports: [RepositoriesModule, TokenModule],
   controllers: [EmailController, ToneController],
   providers: [EmailService, ToneService],
 })
-export class EmailModule {}
+export class EmailModule { }

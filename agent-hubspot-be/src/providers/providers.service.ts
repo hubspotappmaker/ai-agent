@@ -16,12 +16,17 @@ export class ProvidersService {
     if (!hubspot) throw new NotFoundException('Hubspot portal not found');
     const providers = await this.providerRepository.find({ where: { hubspot: { id: hubspot.id } }, order: { createdAt: 'DESC' } });
 
-    // Backfill missing `type` from `typeKey` if needed
-    const toBackfill = providers.filter((p) => !p.type && p.typeKey && (PROVIDER_TYPE_PRESETS as any)[p.typeKey]);
-    if (toBackfill.length > 0) {
+    // Always update providers with latest constants data
+    const providersToUpdate = providers.filter((p) => 
+      p.typeKey && (PROVIDER_TYPE_PRESETS as any)[p.typeKey]
+    );
+    
+    if (providersToUpdate.length > 0) {
       await Promise.all(
-        toBackfill.map((p) =>
-          this.providerRepository.update(p.id, { type: (PROVIDER_TYPE_PRESETS as any)[p.typeKey] as any }),
+        providersToUpdate.map((p) =>
+          this.providerRepository.update(p.id, { 
+            type: (PROVIDER_TYPE_PRESETS as any)[p.typeKey] as any 
+          }),
         ),
       );
       return this.providerRepository.find({ where: { hubspot: { id: hubspot.id } }, order: { createdAt: 'DESC' } });

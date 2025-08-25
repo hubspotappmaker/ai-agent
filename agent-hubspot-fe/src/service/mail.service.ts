@@ -29,3 +29,10 @@ export const generateEmail = async (portalId: string, data: {
     const URL_BACKEND = `/email/generate?portalId=${portalId}`;
     return await dataxios.post(URL_BACKEND, data)
 }
+export const saveTempleteEmail = async (data: {
+    content: string,
+    portalId: string
+}) => {
+    const URL_BACKEND = `/email/save-template`;
+    return await dataxios.post(URL_BACKEND, data)
+}

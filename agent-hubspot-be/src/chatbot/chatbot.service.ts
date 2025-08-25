@@ -15,7 +15,183 @@ export class ChatbotService {
         private readonly tokenService: TokenService,
     ) { }
 
-    async chatWithGPT(userId: string, payload: ChatWithMeDto) {
+    // Helper function to handle different providers
+    private async callAIProvider(provider: any, systemPrompt: string, userMessages: any[], maxTokens: number) {
+        const preset = PROVIDER_TYPE_PRESETS[provider.typeKey];
+        const availableModels = preset?.model ?? [];
+        const model = availableModels[provider.defaultModel] ?? availableModels[0] ?? 'gpt-4o-mini';
+
+        if (provider.typeKey === 'DEEPSEEK') {
+            // DeepSeek API call
+            const requestBody = {
+                model: model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...userMessages,
+                ],
+                temperature: 0.3,
+                max_tokens: maxTokens,
+                stream: false
+            };
+
+            try {
+                const response = await axios.post(
+                    'https://api.deepseek.com/chat/completions',
+                    requestBody,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${provider.key}`,
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 30000, // 30 seconds timeout
+                    },
+                );
+
+                const content = response.data?.choices?.[0]?.message?.content;
+                if (!content) {
+                    throw new BadRequestException('DeepSeek API returned empty response');
+                }
+
+                return content;
+            } catch (error) {
+                if (error.code === 'ECONNABORTED') {
+                    throw new BadRequestException('DeepSeek API request timed out');
+                }
+                if (error.response) {
+                    const errorMessage = error.response.data?.error?.message || error.response.data?.message || 'DeepSeek API error';
+                    throw new BadRequestException(`DeepSeek API error: ${errorMessage}`);
+                }
+                throw new BadRequestException(`DeepSeek API request failed: ${error.message}`);
+            }
+        } else if (provider.typeKey === 'CLAUDE') {
+            // Claude API call
+            const requestBody = {
+                model: model,
+                max_tokens: maxTokens,
+                system: systemPrompt,
+                messages: userMessages
+            };
+
+            try {
+                const response = await axios.post(
+                    'https://api.anthropic.com/v1/messages',
+                    requestBody,
+                    {
+                        headers: {
+                            'x-api-key': provider.key,
+                            'anthropic-version': '2023-06-01',
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 30000, // 30 seconds timeout
+                    },
+                );
+
+                const content = response.data?.content?.[0]?.text;
+                if (!content) {
+                    throw new BadRequestException('Claude API returned empty response');
+                }
+
+                return content;
+            } catch (error) {
+                if (error.code === 'ECONNABORTED') {
+                    throw new BadRequestException('Claude API request timed out');
+                }
+                if (error.response) {
+                    const errorMessage = error.response.data?.error?.message || error.response.data?.message || 'Claude API error';
+                    throw new BadRequestException(`Claude API error: ${errorMessage}`);
+                }
+                throw new BadRequestException(`Claude API request failed: ${error.message}`);
+            }
+        } else if (provider.typeKey === 'GROK') {
+            // Grok API call
+            const requestBody = {
+                model: model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...userMessages,
+                ],
+                temperature: 0.4,
+                max_tokens: maxTokens,
+                stream: false
+            };
+
+            try {
+                const response = await axios.post(
+                    'https://api.x.ai/v1/chat/completions',
+                    requestBody,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${provider.key}`,
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 30000, // 30 seconds timeout
+                    },
+                );
+
+                const content = response.data?.choices?.[0]?.message?.content;
+                if (!content) {
+                    throw new BadRequestException('Grok API returned empty response');
+                }
+
+                return content;
+            } catch (error) {
+                if (error.code === 'ECONNABORTED') {
+                    throw new BadRequestException('Grok API request timed out');
+                }
+                if (error.response) {
+                    const errorMessage = error.response.data?.error?.message || error.response.data?.message || 'Grok API error';
+                    throw new BadRequestException(`Grok API error: ${errorMessage}`);
+                }
+                throw new BadRequestException(`Grok API request failed: ${error.message}`);
+            }
+        } else {
+            // ChatGPT API call (existing logic)
+            const requestBody = {
+                model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...userMessages,
+                ],
+                max_tokens: maxTokens,
+                temperature: 0.2,
+                top_p: 1,
+                presence_penalty: 0,
+                frequency_penalty: 0,
+            };
+
+            try {
+                const response = await axios.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    requestBody,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${provider.key}`,
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 30000, // 30 seconds timeout
+                    },
+                );
+
+                const content = response.data?.choices?.[0]?.message?.content;
+                if (!content) {
+                    throw new BadRequestException('ChatGPT API returned empty response');
+                }
+
+                return content;
+            } catch (error) {
+                if (error.code === 'ECONNABORTED') {
+                    throw new BadRequestException('ChatGPT API request timed out');
+                }
+                if (error.response) {
+                    const errorMessage = error.response.data?.error?.message || error.response.data?.message || 'ChatGPT API error';
+                    throw new BadRequestException(`ChatGPT API error: ${errorMessage}`);
+                }
+                throw new BadRequestException(`ChatGPT API request failed: ${error.message}`);
+            }
+        }
+    }
+
+    async chatWithAI(userId: string, payload: ChatWithMeDto) {
         const { portalId, messages, contactId } = payload;
         const contactInfo = await this.getContactInfo(portalId, contactId);
 
@@ -25,13 +201,11 @@ export class ChatbotService {
         });
         if (!hubspot) throw new NotFoundException('Hubspot portal not found for user');
 
-        const provider = hubspot.providers?.find((p) => p.isUsed && p.typeKey === 'CHAT_GPT');
-        if (!provider) throw new NotFoundException('ChatGPT provider is not active for this portal');
+        // Tìm provider đang được sử dụng (ưu tiên DEEPSEEK, CLAUDE, GROK, sau đó là CHAT_GPT)
+        const provider = hubspot.providers?.find((p) => p.isUsed && (p.typeKey === 'DEEPSEEK' || p.typeKey === 'CLAUDE' || p.typeKey === 'GROK' || p.typeKey === 'CHAT_GPT'));
+        if (!provider) throw new NotFoundException('No active AI provider found for this portal');
         if (!provider.key) throw new BadRequestException('Provider API key is missing');
 
-        const preset = provider.type ? PROVIDER_TYPE_PRESETS[provider.typeKey] : undefined;
-        const availableModels = preset?.model ?? [];
-        const model = availableModels[provider.defaultModel] ?? availableModels[0] ?? 'gpt-4o-mini';
         const maxTokens = provider.maxToken && provider.maxToken > 0 ? provider.maxToken : 150;
 
         // 1) Tạo system prompt (KHÔNG đưa vào vai 'user')
@@ -46,31 +220,7 @@ export class ChatbotService {
             ? messages
             : [{ role: 'user', content: 'What is the work email of this contact?' }];
 
-        const requestBody = {
-            model,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                ...userMessages,
-            ],
-            max_tokens: maxTokens,
-            temperature: 0.2,
-            top_p: 1,
-            presence_penalty: 0,
-            frequency_penalty: 0,
-        };
-
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            requestBody,
-            {
-                headers: {
-                    Authorization: `Bearer ${provider.key}`,
-                    'Content-Type': 'application/json',
-                },
-            },
-        );
-
-        return response.data.choices?.[0]?.message?.content ?? '';
+        return await this.callAIProvider(provider, systemPrompt, userMessages, maxTokens);
     }
 
 

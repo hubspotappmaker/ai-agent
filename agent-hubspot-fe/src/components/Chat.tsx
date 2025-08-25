@@ -179,10 +179,10 @@ const Chat: React.FC = () => {
 
     // Only support CHAT_GPT engine for now
     const engine = localStorage.getItem('current_engine');
-    if (engine !== 'CHAT_GPT') {
-      message.warning('This AI engine is not supported yet.');
-      return;
-    }
+    // if (engine !== 'CHAT_GPT') {
+    //   message.warning('This AI engine is not supported yet.');
+    //   return;
+    // }
 
     const userMsg: ChatMessage = { role: 'user', content: messageText };
     const nextHistory = [...history, userMsg];

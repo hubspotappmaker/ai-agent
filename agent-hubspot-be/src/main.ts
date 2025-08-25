@@ -9,8 +9,8 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const httpsOptions = {
-    key: fs.readFileSync("/Users/huudung/Desktop/qimtf/duplicator-hubspot-object/Duplicator-be/localhost.key"),
-    cert: fs.readFileSync("/Users/huudung/Desktop/qimtf/duplicator-hubspot-object/Duplicator-be/localhost.crt"),
+    key: fs.readFileSync("/Users/huudung/Desktop/agent-hubspot/agent-hubspot-be/localhost.key"),
+    cert: fs.readFileSync("/Users/huudung/Desktop/agent-hubspot/agent-hubspot-be/localhost.crt"),
   };
 
   const app = await NestFactory.create(AppModule, {

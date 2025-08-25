@@ -79,6 +79,6 @@ export class ChatbotController {
     @CurrentUser('id') userId: string,
     @Body() body: ChatWithMeDto,
   ) {
-    return this.chatbotService.chatWithGPT(userId, body);
+    return this.chatbotService.chatWithAI(userId, body);
   }
 }

@@ -3,8 +3,8 @@ import JoditEditor from 'jodit-react';
 import { Mail, Plus, Trash2, X } from 'lucide-react';
 import { getCurrentEngine } from '../service/provider.service';
 import { useHubspotParams } from '../context/HubspotParamsContext';
-import { getAllTone, createNewTone, deleteToneById, changeToDefault, generateEmail as generateEmailAPI } from '../service/mail.service';
-import { Modal } from 'antd';
+import { getAllTone, createNewTone, deleteToneById, changeToDefault, generateEmail as generateEmailAPI, saveTempleteEmail } from '../service/mail.service';
+import { message, Modal } from 'antd';
 
 type Tone = {
   id: string;
@@ -36,6 +36,8 @@ const Email: React.FC = () => {
   const [recipient, setRecipient] = useState<string>('client.a@example.com');
   const [isSending, setIsSending] = useState<boolean>(false);
   const [sendBanner, setSendBanner] = useState<string>('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState<boolean>(false);
+  const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
   const { params } = useHubspotParams();
 
   const generateEmail = async () => {
@@ -95,6 +97,7 @@ const Email: React.FC = () => {
     setGeneratedEmailHtml('');
     setSendBanner('');
     setCustomContent('');
+    setSavedTemplateId(null);
     try
     {
       localStorage.removeItem('generated_email');
@@ -216,6 +219,36 @@ const Email: React.FC = () => {
       setSendBanner('Email sent successfully');
       setTimeout(() => setSendBanner(''), 2000);
     }, 800);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!generatedEmailHtml || !generatedEmailHtml.trim()) return;
+
+    setIsSavingTemplate(true);
+    try
+    {
+      const response = await saveTempleteEmail({
+        content: generatedEmailHtml,
+        portalId: params.portalId!
+      });
+
+      if (response?.status)
+      {
+        message.success('Template saved successfully');
+        console.log('[SaveTemplate] Saved:', response.data);
+        setSavedTemplateId(response.data?.id?.toString() || null);
+      } else
+      {
+        message.error('Failed to save template');
+      }
+    } catch (error)
+    {
+      console.error('Error saving template:', error);
+      message.error('Failed to save template');
+    } finally
+    {
+      setIsSavingTemplate(false);
+    }
   };
 
   const handleCreateTone = async () => {
@@ -391,16 +424,6 @@ const Email: React.FC = () => {
         >
           {isGeneratingEmail ? 'Generating…' : 'Generate Email'}
         </button>
-        {generatedEmail && (
-          <button
-            onClick={clearGeneratedEmail}
-            className="px-4 py-3 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors duration-200"
-            title="Clear generated email"
-          >
-            <X className="w-4 h-4" />
-            Clear
-          </button>
-        )}
       </div>
 
       {generatedEmail && (
@@ -429,7 +452,80 @@ const Email: React.FC = () => {
               }}
             />
           </div>
-          <div className="mt-4 border border-slate-200 rounded-lg p-4">
+
+          {/* Action Panel */}
+          <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Actions</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveTemplate}
+                  disabled={!generatedEmailHtml || !generatedEmailHtml.trim() || isSavingTemplate}
+                  className="px-3 py-1.5 bg-[#667eea] text-white rounded-md hover:bg-[#5a6de0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-xs font-medium flex items-center gap-1.5"
+                  title="Save current content as template"
+                >
+                  {isSavingTemplate && (
+                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  {isSavingTemplate ? 'Saving...' : 'Save Template'}
+                </button>
+                <button
+                  onClick={clearGeneratedEmail}
+                  className="px-3 py-1.5 flex items-center gap-1.5 border border-slate-300 text-slate-700 rounded-md hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-xs font-medium"
+                  title="Clear generated email"
+                >
+                  <X className="w-3 h-3" />
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Success Panel */}
+          {savedTemplateId && (
+            <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-[#667eea]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-slate-800 mb-1">Template Saved Successfully!</h4>
+                  <p className="text-xs text-slate-600 mb-3">Your email template has been saved with ID: {savedTemplateId}</p>
+                  <div className="flex gap-2">
+                    <a
+                      href={`https://app.hubspot.com/design-manager/${params.portalId}/code/${savedTemplateId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#667eea] text-white rounded-md hover:bg-[#5a6de0] transition-colors duration-200 text-xs font-medium"
+                    >
+                      <Mail className="w-3 h-3" />
+                      Go to Template
+                    </a>
+
+                    <a
+                      href={`https://app.hubspot.com/email/${params.portalId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-[#667eea] rounded-md hover:border-[#667eea] border border-transparent transition-colors duration-200 text-xs font-medium"
+                    >
+                      <Mail className="w-3 h-3" />
+                      Go to send email
+                    </a>
+
+                    <button
+                      onClick={() => setSavedTemplateId(null)}
+                      className="px-3 py-1.5 text-slate-600 hover:bg-blue-100 rounded-md transition-colors duration-200 text-xs font-medium"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* <div className="mt-4 border border-slate-200 rounded-lg p-4">
             {sendBanner && (
               <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-2 text-xs">{sendBanner}</div>
             )}
@@ -472,7 +568,7 @@ const Email: React.FC = () => {
                 {isSending ? 'Sending…' : 'Send'}
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       )}
       <div ref={bottomRef} />
