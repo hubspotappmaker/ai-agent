@@ -5,6 +5,7 @@ import { HubspotRepository } from 'lib/repository/hubspot.repository';
 import axios from 'axios';
 import { PROVIDER_TYPE_PRESETS } from 'lib/constant/provider.constants';
 import { TokenService } from 'lib/service/token.service';
+import { ActivityService } from 'lib/service/activity.service';
 import { CONTACT_SYSTEM_PROMPT } from 'lib/constant/prompt';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class ChatbotService {
         private readonly providerRepository: ProviderRepository,
         private readonly hubspotRepository: HubspotRepository,
         private readonly tokenService: TokenService,
+        private readonly activityService: ActivityService,
     ) { }
 
     // Helper function to handle different providers
@@ -220,7 +222,33 @@ export class ChatbotService {
             ? messages
             : [{ role: 'user', content: 'What is the work email of this contact?' }];
 
-        return await this.callAIProvider(provider, systemPrompt, userMessages, maxTokens);
+        // Log activity start
+        const preset = PROVIDER_TYPE_PRESETS[provider.typeKey];
+        const availableModels = preset?.model ?? [];
+        const model = availableModels[provider.defaultModel] ?? availableModels[0] ?? 'gpt-4o-mini';
+        
+        const activityId = await this.activityService.logChatInteraction(
+            userId,
+            portalId,
+            provider.typeKey,
+            model,
+            provider.id,
+            `Chat with contact ${contactId}`,
+            maxTokens
+        );
+
+        try {
+            const result = await this.callAIProvider(provider, systemPrompt, userMessages, maxTokens);
+            
+            // Log success
+            await this.activityService.markActivitySuccess(activityId);
+            
+            return result;
+        } catch (error) {
+            // Log failure
+            await this.activityService.markActivityFailed(activityId, error.message);
+            throw error;
+        }
     }
 
 

@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Hubspot } from './hubspot.entity';
 import { Tone } from './tone.entity';
+import { Activity } from './activity.entity';
 import { UserRole } from 'lib/constant/user.constants';
 
 @Entity({ name: 'users' })
@@ -29,4 +30,7 @@ export class User extends BaseEntity {
 
     @OneToMany(() => Tone, (tone) => tone.user, { cascade: true })
     tones: Tone[];
+
+    @OneToMany(() => Activity, (activity) => activity.user, { cascade: true })
+    activities: Activity[];
 }

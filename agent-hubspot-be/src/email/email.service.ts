@@ -6,6 +6,7 @@ import { ToneRepository } from 'lib/repository/tone.repository';
 import { GenerateEmailDto } from './dto/generate-email.dto';
 import { SaveTemplateDto } from './dto/save-template.dto';
 import { TokenService } from 'lib/service/token.service';
+import { ActivityService } from 'lib/service/activity.service';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class EmailService {
     private readonly hubspotRepository: HubspotRepository,
     private readonly toneRepository: ToneRepository,
     private readonly tokenService: TokenService,
+    private readonly activityService: ActivityService,
   ) { }
 
   // Build a system prompt specifically for generating email content
@@ -215,26 +217,63 @@ Rules:\n- Output must be an email body (and optional subject).\n- Do not include
     const defaultTone = await this.toneRepository.findOne({ where: { user: { id: userId }, isDefault: true } });
     const systemPrompt = this.buildEmailSystemPrompt(defaultTone?.description || undefined);
 
-    return await this.callAIProvider(provider, systemPrompt, content, maxTokens);
+    // Log activity start
+    const preset = PROVIDER_TYPE_PRESETS[provider.typeKey];
+    const availableModels = preset?.model ?? [];
+    const model = availableModels[provider.defaultModel] ?? availableModels[0] ?? 'gpt-4o-mini';
+    
+    const activityId = await this.activityService.logEmailGeneration(
+      userId,
+      portalId,
+      provider.typeKey,
+      model,
+      provider.id,
+      `Generate email with content: ${content.substring(0, 100)}...`,
+      maxTokens
+    );
+
+    try {
+      const result = await this.callAIProvider(provider, systemPrompt, content, maxTokens);
+      
+      // Log success
+      await this.activityService.markActivitySuccess(activityId);
+      
+      return result;
+    } catch (error) {
+      // Log failure
+      await this.activityService.markActivityFailed(activityId, error.message);
+      throw error;
+    }
   }
 
   async saveTemplate(userId: string, payload: SaveTemplateDto) {
     const { content, portalId } = payload;
     console.log(portalId);
-    // Find HubSpot portal for the user
-    const hubspotToken = await this.tokenService.getTokenPortalId(portalId);
+    
+    // Log activity start
+    const activityId = await this.activityService.logTemplateSave(
+      userId,
+      portalId,
+      'HubSpot API',
+      'template-save',
+      undefined,
+      `Save template to HubSpot portal: ${portalId}`,
+      0
+    );
 
-    // Prepare request body for HubSpot API
-    const uuid = randomUUID();
-    const requestBody = {
-      template_type: 2,
-      path: `custom/email/${uuid}`,
-      is_available_for_new_content: true,
-      source: content
-    };
+    try {
+      // Find HubSpot portal for the user
+      const hubspotToken = await this.tokenService.getTokenPortalId(portalId);
 
-    try
-    {
+      // Prepare request body for HubSpot API
+      const uuid = randomUUID();
+      const requestBody = {
+        template_type: 2,
+        path: `custom/email/${uuid}`,
+        is_available_for_new_content: true,
+        source: content
+      };
+
       const response = await axios.post(
         'https://api.hubapi.com/content/api/v2/templates',
         requestBody,
@@ -246,10 +285,16 @@ Rules:\n- Output must be an email body (and optional subject).\n- Do not include
         },
       );
 
+      // Log success
+      await this.activityService.markActivitySuccess(activityId);
+
       // Return the template ID from HubSpot response
       return { id: response.data.id };
     } catch (error)
     {
+      // Log failure
+      await this.activityService.markActivityFailed(activityId, error.message);
+      
       if (error.response)
       {
         const errorMessage = error.response.data?.message || error.response.data?.error || 'Unknown error';

@@ -1,6 +1,7 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Hubspot } from './hubspot.entity';
+import { Activity } from './activity.entity';
 import { ProviderType, PROVIDER_TYPE_PRESETS } from 'lib/constant/provider.constants';
 
 type ProviderPreset = (typeof PROVIDER_TYPE_PRESETS)[keyof typeof PROVIDER_TYPE_PRESETS];
@@ -36,5 +37,8 @@ export class Provider extends BaseEntity {
 
   @Column({ type: 'boolean', default: false, name: 'is_used' })
   isUsed: boolean;
+
+  @OneToMany(() => Activity, (activity) => activity.provider)
+  activities: Activity[];
 }
 

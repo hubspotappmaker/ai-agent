@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { EmailModule } from './email/email.module';
+import { ActivitiesModule } from './activities/activities.module';
 @Module({
   imports: [
     HttpModule,
@@ -41,6 +42,7 @@ import { EmailModule } from './email/email.module';
     ProvidersModule,
     ChatbotModule,
     EmailModule,
+    ActivitiesModule,
     TokenModule,
   ],
   controllers: [AppController],
